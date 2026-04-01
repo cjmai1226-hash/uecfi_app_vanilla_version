@@ -7,9 +7,77 @@ import '../services/ad_service.dart';
 import '../providers/settings_provider.dart';
 import 'menu/edit_profile_screen.dart';
 import 'comments_screen.dart';
+import 'forms/create_post_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Widget _buildEmptyState(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.forum_outlined,
+                size: 64,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No posts yet!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Be the first to share something with the community.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: textColor.withValues(alpha: 0.6),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+                );
+              },
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.add_comment_outlined),
+              label: const Text(
+                'Share a Post',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +106,7 @@ class HomeScreen extends StatelessWidget {
                 );
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text('No posts yet! Be the first to share.'),
-                );
+                return _buildEmptyState(context);
               }
 
               // Filter out explicitly reported arrays synchronously
@@ -50,9 +116,7 @@ class HomeScreen extends StatelessWidget {
               }).toList();
 
               if (posts.isEmpty) {
-                return const Center(
-                  child: Text('No posts yet! Be the first to share.'),
-                );
+                return _buildEmptyState(context);
               }
 
               return ListView.separated(

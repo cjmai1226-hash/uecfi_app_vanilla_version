@@ -132,77 +132,118 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       'Koro',
     ];
 
-    final pattern = RegExp(
-      r'\[([^\]]+)\]|(' + wordsToBold.join('|') + r')',
+    // Pattern for Words to Bold (Chorus, Coro, etc) in lyric rows
+    final voicePattern = RegExp(
+      r'(' + wordsToBold.join('|') + r')',
       caseSensitive: false,
     );
-    final List<TextSpan> spans = [];
 
-    processedText.splitMapJoin(
-      pattern,
-      onMatch: (Match m) {
-        if (m.group(1) != null) {
-          String chordText = m.group(1)!;
-          if (_isChordsView && showChords && _transposeOffset != 0) {
-            chordText = chordText
-                .split(' ')
-                .map((c) => _transposeChord(c, _transposeOffset))
-                .join(' ');
-          }
-          if (_isChordsView &&
-              showChords &&
-              showChordShapes &&
-              !_isProjectMode) {
-            spans.add(
-              TextSpan(
-                text: ' $chordText ',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                  fontSize: fontSize,
-                ),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () {
-                    _showChordShapeDialog(chordText, instrument);
-                  },
-              ),
-            );
-          } else {
-            spans.add(
-              TextSpan(
-                text: ' $chordText ',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                  fontSize: fontSize,
-                ),
-              ),
-            );
-          }
-        } else if (m.group(2) != null) {
+    // Pattern for chords in a > row (non-space words)
+    final chordPattern = RegExp(r'(\S+)');
+
+    final List<TextSpan> spans = [];
+    final lines = processedText.split('\n');
+
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      final trimmed = line.trim();
+
+      if (trimmed.startsWith('>')) {
+        // --- CHORD ROW --- (Start with >)
+        final gtIndex = line.indexOf('>');
+        final prefix = line.substring(0, gtIndex);
+        final content = line.substring(gtIndex + 1);
+
+        if (prefix.isNotEmpty) {
           spans.add(
             TextSpan(
-              text: m.group(2),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                fontSize: fontSize,
-              ),
+              text: prefix,
+              style: TextStyle(color: textColor, fontSize: fontSize),
             ),
           );
         }
-        return '';
-      },
-      onNonMatch: (String n) {
-        spans.add(
-          TextSpan(
-            text: n,
-            style: TextStyle(color: textColor, fontSize: fontSize),
-          ),
+
+        content.splitMapJoin(
+          chordPattern,
+          onMatch: (Match m) {
+            String chordText = m.group(0)!;
+            if (_isChordsView && showChords && _transposeOffset != 0) {
+              chordText = chordText
+                  .split(' ')
+                  .map((c) => _transposeChord(c, _transposeOffset))
+                  .join(' ');
+            }
+
+            final chordStyle = TextStyle(
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+              fontSize: fontSize,
+            );
+
+            if (_isChordsView &&
+                showChords &&
+                showChordShapes &&
+                !_isProjectMode) {
+              spans.add(
+                TextSpan(
+                  text: chordText,
+                  style: chordStyle,
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      _showChordShapeDialog(chordText, instrument);
+                    },
+                ),
+              );
+            } else {
+              spans.add(TextSpan(text: chordText, style: chordStyle));
+            }
+            return '';
+          },
+          onNonMatch: (String n) {
+            spans.add(
+              TextSpan(
+                text: n,
+                style: TextStyle(color: textColor, fontSize: fontSize),
+              ),
+            );
+            return '';
+          },
         );
-        return '';
-      },
-    );
+      } else {
+        // --- NORMAL ROW --- (Lyrics, labels)
+        line.splitMapJoin(
+          voicePattern,
+          onMatch: (Match m) {
+            // labels like Chorus, Coro, etc
+            spans.add(
+              TextSpan(
+                text: m.group(0),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  fontSize: fontSize,
+                ),
+              ),
+            );
+            return '';
+          },
+          onNonMatch: (String n) {
+            spans.add(
+              TextSpan(
+                text: n,
+                style: TextStyle(color: textColor, fontSize: fontSize),
+              ),
+            );
+            return '';
+          },
+        );
+      }
+
+      // Add newline except for the last line
+      if (i < lines.length - 1) {
+        spans.add(const TextSpan(text: '\n'));
+      }
+    }
 
     return spans;
   }

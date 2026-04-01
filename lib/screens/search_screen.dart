@@ -218,8 +218,14 @@ class _SearchScreenState extends State<SearchScreen> {
           icon = Icons.music_note;
         } else if (type == 'Center') {
           title = item['centername']?.toString() ?? 'Unknown Center';
+          final district = item['centerdistrict']?.toString() ?? '';
           final address = item['centeraddress']?.toString() ?? '';
-          subtitle = address.isNotEmpty ? address : 'No address provided';
+          
+          if (district.isNotEmpty && address.isNotEmpty) {
+            subtitle = '$district • $address';
+          } else {
+            subtitle = district.isNotEmpty ? district : (address.isNotEmpty ? address : 'No details provided');
+          }
           icon = Icons.church_outlined;
         } else if (type == 'By-Laws') {
           title = item['title'] ?? 'Unknown By-Law';

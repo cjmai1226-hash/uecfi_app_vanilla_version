@@ -78,18 +78,22 @@ class CenterDetailScreen extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
 
     final name = centerNode['centername'] ?? 'Unknown Center';
-    final address = centerNode['centeraddress'] ?? '';
-    final rawDistrict = centerNode['centerdistrict']?.toString();
-    final district = rawDistrict == '0'
-        ? 'Foreign-Based'
-        : (rawDistrict ?? 'Uncategorized');
+    final address = centerNode['centeraddress']?.toString() ?? '';
+    final location = centerNode['centerlocation']?.toString() ?? '';
+    final rawDistrict = centerNode['centerdistrict']?.toString() ?? '';
     final status = centerNode['centerstatus'] ?? '';
-    final location = centerNode['centerlocation'] ?? '';
     final contact = centerNode['centercontact'] ?? '';
+
+    // The user moved from int codes (0, 1) to full text (Foreign-Based, District 1)
+    // in the 'centerdistrict' field. We use this as our primary source for the district.
+    final String district = rawDistrict.isNotEmpty ? rawDistrict : 'Uncategorized';
 
     final surfaceColor = Theme.of(context).colorScheme.surface;
     final textColor = Theme.of(context).colorScheme.onSurface;
     final primaryColor = Theme.of(context).colorScheme.primary;
+
+    // Use centeraddress as primary location, fallback to centerlocation
+    final String displayLocation = address.isNotEmpty ? address : location;
 
     final contactStr = contact.toString().trim();
     final contactParts = contactStr.split(',').map((e) => e.trim()).toList();
@@ -124,12 +128,6 @@ class CenterDetailScreen extends StatelessWidget {
           ? '\n$contactNumber'
           : contactNumber;
     }
-
-    final String displayLocation = address.toString().trim().isNotEmpty
-        ? address.toString().trim()
-        : (location.toString().trim().isNotEmpty
-              ? location.toString().trim()
-              : "");
 
     final String completeContactDetailsFinal = completeContactDetails.trim();
 

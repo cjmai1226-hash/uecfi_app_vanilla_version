@@ -115,15 +115,32 @@ class _CentersScreenState extends State<CentersScreen> {
 
             if (_currentFilter == CenterFilter.district) {
               centers.sort((a, b) {
-                final distA =
-                    (a['centerdistrict']?.toString() ?? 'Uncategorized');
-                final distB =
-                    (b['centerdistrict']?.toString() ?? 'Uncategorized');
-                // Sort by district first, then by center name
-                final districtCompare = distA.compareTo(distB);
-                if (districtCompare != 0) return districtCompare;
-                final nameA = (a['centername']?.toString() ?? '');
-                final nameB = (b['centername']?.toString() ?? '');
+                final distA = (a['centerdistrict']?.toString() ?? 'Uncategorized');
+                final distB = (b['centerdistrict']?.toString() ?? 'Uncategorized');
+
+                // Custom comparator for natural sorting (1, 2, 10...)
+                int getSortWeight(String dist) {
+                  if (dist == 'Foreign-Based') return 9999;
+                  if (dist == 'Uncategorized') return 10000;
+                  
+                  // Extract number from "District X"
+                  final numberMatch = RegExp(r'\d+').firstMatch(dist);
+                  if (numberMatch != null) {
+                    return int.parse(numberMatch.group(0)!);
+                  }
+                  return 5000; // Generic fallback
+                }
+
+                final weightA = getSortWeight(distA);
+                final weightB = getSortWeight(distB);
+
+                if (weightA != weightB) {
+                  return weightA.compareTo(weightB);
+                }
+
+                // If same district, sort by name
+                final nameA = (a['centername']?.toString() ?? '').toLowerCase();
+                final nameB = (b['centername']?.toString() ?? '').toLowerCase();
                 return nameA.compareTo(nameB);
               });
             } else {
@@ -141,53 +158,72 @@ class _CentersScreenState extends State<CentersScreen> {
                   const Divider(height: 1, thickness: 0.5),
               itemBuilder: (context, index) {
                 final centerNode = centers[index];
-                final rawDistrict = centerNode['centerdistrict']?.toString();
-                final district = rawDistrict == '0'
-                    ? 'Foreign-Based'
-                    : (rawDistrict ?? 'Uncategorized');
                 final name = centerNode['centername'] ?? 'Unknown Center';
-                final address =
-                    centerNode['centeraddress'] ?? 'No address provided';
+                final address = centerNode['centeraddress']?.toString() ?? '';
+                final location = centerNode['centerlocation']?.toString() ?? '';
+                final rawDistrict = centerNode['centerdistrict']?.toString() ?? '';
+
+                // Use centerdistrict for the pill label (as requested)
+                final String district = rawDistrict.isNotEmpty ? rawDistrict : 'Uncategorized';
+                
+                // Use centeraddress or centerlocation for the subtitle
+                final String subtitleText = address.isNotEmpty ? address : location;
+
+                // Short-code logic for the avatar text
+                String avatarText = '?';
+                if (district == 'Foreign-Based') {
+                  avatarText = 'FB';
+                } else if (district.contains('District')) {
+                  final number = district.replaceAll(RegExp(r'[^0-9]'), '');
+                  avatarText = 'D$number';
+                } else if (district.isNotEmpty) {
+                  avatarText = district.substring(0, 1).toUpperCase();
+                }
 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
                   ),
+                  leading: CircleAvatar(
+                    backgroundColor: primaryColor.withValues(alpha: 0.1),
+                    child: Text(
+                      avatarText,
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                   title: Text(
                     name.toString(),
                     style: TextStyle(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: textColor,
                     ),
                   ),
                   subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6.0),
+                    padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
-                      address.toString(),
+                      subtitleText.isEmpty
+                          ? 'No address provided'
+                          : subtitleText,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: textColor.withValues(alpha: 0.6),
                         height: 1.3,
+                        fontSize: 13,
                       ),
                     ),
                   ),
-                  leading: CircleAvatar(
-                    backgroundColor: primaryColor.withValues(alpha: 0.1),
-                    child: Text(
-                      district.toString().isNotEmpty
-                          ? district.toString().substring(0, 1).toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: textColor.withValues(alpha: 0.3),
                   ),
-                  trailing: const Icon(Icons.chevron_right, size: 24),
                   onTap: () {
                     Navigator.push(
                       context,
