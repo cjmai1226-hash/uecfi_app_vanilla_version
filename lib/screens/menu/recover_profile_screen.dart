@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/main_app_bar.dart';
 
 class RecoverProfileScreen extends StatefulWidget {
   const RecoverProfileScreen({super.key});
@@ -55,7 +56,6 @@ class _RecoverProfileScreenState extends State<RecoverProfileScreen> {
             userId,
             data['name'] ?? 'User',
             email,
-            data['avatarIndex'] ?? 0,
             data['district'] ?? '',
             data['position'] ?? '',
             data['firstName'] ?? '',
@@ -148,10 +148,9 @@ class _RecoverProfileScreenState extends State<RecoverProfileScreen> {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recover Profile'),
-        centerTitle: true,
-        elevation: 0,
+      appBar: const MainAppBar(
+        title: 'Recover Profile',
+        showBackButton: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ad_service.dart';
+import '../../widgets/main_app_bar.dart';
 
 class SubmitSongScreen extends StatefulWidget {
   const SubmitSongScreen({super.key});
@@ -34,6 +36,7 @@ class _SubmitSongScreenState extends State<SubmitSongScreen> {
         SnackBar(
           content: const Text('Title and Content are required'),
           backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -47,15 +50,7 @@ class _SubmitSongScreenState extends State<SubmitSongScreen> {
   }
 
   Future<void> _executeSubmitSong() async {
-    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Title and Content are required'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
+    if (_titleController.text.isEmpty || _contentController.text.isEmpty) return;
 
     setState(() => _isSubmitting = true);
 
@@ -100,34 +95,32 @@ class _SubmitSongScreenState extends State<SubmitSongScreen> {
     TextEditingController controller,
     String label,
     IconData icon,
-    Color textColor, {
+    ColorScheme colorScheme, {
     int maxLines = 1,
     bool useMonospace = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: TextStyle(
-          fontSize: 16,
-          color: textColor,
-          fontWeight: FontWeight.w500,
-          fontFamily: useMonospace ? 'monospace' : null,
-        ),
+        style: useMonospace
+            ? GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w500)
+            : const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 22),
+          labelStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(icon, color: colorScheme.primary, size: 22),
           filled: true,
-          fillColor: textColor.withValues(alpha: 0.05),
+          fillColor: colorScheme.surfaceContainerLow,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(24),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
     );
@@ -135,79 +128,61 @@ class _SubmitSongScreenState extends State<SubmitSongScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Submit Song'),
-        centerTitle: true,
-        elevation: 0,
+      appBar: MainAppBar(
+        title: 'Submit Song',
+        showBackButton: true,
         actions: [
           _isSubmitting
               ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                   child: SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : TextButton(
+              : IconButton.filledTonal(
+                  tooltip: 'Submit',
+                  icon: const Icon(Icons.check_rounded, size: 18),
                   onPressed: _submitSong,
-                  child: Text(
-                    'Submit',
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
                 ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildModernField(
-                    _titleController,
-                    'Song Title',
-                    Icons.music_note_rounded,
-                    textColor,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildModernField(_titleController, 'Song Title', Icons.music_note_rounded, colorScheme),
+                _buildModernField(_authorController, 'Author / Composer', Icons.person_rounded, colorScheme),
+                _buildModernField(_categoryController, 'Category (e.g. Worship)', Icons.category_rounded, colorScheme),
+                _buildModernField(
+                  _contentController,
+                  'Lyrics here...',
+                  Icons.text_fields_rounded,
+                  colorScheme,
+                  maxLines: 12,
+                  useMonospace: true,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    'Note: Your submission will be reviewed by administrators before being added to the database.',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
                   ),
-                  _buildModernField(
-                    _authorController,
-                    'Author / Composer',
-                    Icons.person_outline_rounded,
-                    textColor,
-                  ),
-                  _buildModernField(
-                    _categoryController,
-                    'Category (e.g. Worship, Praise)',
-                    Icons.category_outlined,
-                    textColor,
-                  ),
-                  _buildModernField(
-                    _contentController,
-                    'Lyrics here...',
-                    Icons.lyrics_outlined,
-                    textColor,
-                    maxLines: 15,
-                    useMonospace: true,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),

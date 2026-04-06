@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../providers/settings_provider.dart';
+import '../utils/color_utils.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final Map<String, dynamic> postNode;
@@ -23,6 +24,19 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     super.dispose();
   }
 
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+    if (timestamp is Timestamp) {
+      final date = timestamp.toDate();
+      final difference = DateTime.now().difference(date);
+      if (difference.inDays > 0) return '${difference.inDays}d';
+      if (difference.inHours > 0) return '${difference.inHours}h';
+      if (difference.inMinutes > 0) return '${difference.inMinutes}m';
+      return 'now';
+    }
+    return '';
+  }
+
   Future<void> _submitComment() async {
     if (_commentController.text.trim().isEmpty) return;
 
@@ -36,7 +50,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         content: _commentController.text.trim(),
         authorEmail: settings.email,
         authorNickname: settings.nickname,
-        avatarIndex: settings.avatarIndex,
       );
 
       _commentController.clear();
@@ -140,15 +153,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              child: Icon(
-                                SettingsProvider
-                                    .avatarIcons[data['avatarIndex'] ?? 0],
-                                color: primaryColor,
-                                size: 18,
-                              ),
+                              backgroundColor: data['authorNickname'] == 'DEVELOPER'
+                                  ? Colors.amber.shade700
+                                  : ColorUtils.getAvatarColor(
+                                      data['authorNickname'] ?? 'Unknown'),
+                              child: data['authorNickname'] == 'DEVELOPER'
+                                  ? const Icon(Icons.verified_rounded,
+                                      color: Colors.white, size: 20)
+                                  : Text(
+                                      (data['authorNickname'] ?? '?').isNotEmpty
+                                          ? (data['authorNickname'] ?? '?')[0]
+                                              .toUpperCase()
+                                          : '?',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -168,13 +190,26 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      data['authorNickname'] ?? 'Unknown',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: textColor,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          data['authorNickname'] ?? 'Unknown',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _formatTimestamp(data['timestamp']),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: textColor.withValues(alpha: 0.5),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(

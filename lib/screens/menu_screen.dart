@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/settings_provider.dart';
+import '../utils/color_utils.dart';
 import 'menu/settings_screen.dart'; // import the new settings screen
 import 'menu/bookmarks_screen.dart';
-import 'menu/edit_profile_screen.dart';
+import 'menu/profile_screen.dart';
 import 'menu/bylaws_screen.dart';
 import 'menu/centers_screen.dart';
 import 'forms/create_post_screen.dart';
@@ -48,13 +49,22 @@ class MenuScreen extends StatelessWidget {
                 ),
                 leading: CircleAvatar(
                   radius: 30,
-                  backgroundColor: primaryColor.withValues(alpha: 0.1),
-                  child: Icon(
-                    SettingsProvider.avatarIcons[settings.avatarIndex %
-                        SettingsProvider.avatarIcons.length],
-                    size: 32,
-                    color: primaryColor,
-                  ),
+                  backgroundColor: settings.nickname == 'DEVELOPER'
+                      ? Colors.amber.shade700
+                      : ColorUtils.getAvatarColor(settings.nickname),
+                  child: settings.nickname == 'DEVELOPER'
+                      ? const Icon(Icons.verified_rounded,
+                          color: Colors.white, size: 32)
+                      : Text(
+                          settings.nickname.isNotEmpty
+                              ? settings.nickname[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                 ),
                 title: Text(
                   settings.nickname,
@@ -79,7 +89,7 @@ class MenuScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const EditProfileScreen(),
+                      builder: (context) => const ProfileScreen(),
                     ),
                   );
                 },

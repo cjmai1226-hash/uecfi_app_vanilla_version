@@ -13,7 +13,6 @@ class BylawDetailScreen extends StatelessWidget {
     Color textColor,
     double fontSize,
   ) {
-    // Matches "Article 1", "Article II", "ARTICLE 12", etc.
     final pattern = RegExp(r'(Article\s+[A-Za-z0-9]+)', caseSensitive: false);
     final List<TextSpan> spans = [];
 
@@ -24,9 +23,10 @@ class BylawDetailScreen extends StatelessWidget {
           TextSpan(
             text: m.group(0),
             style: TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               color: textColor,
-              fontSize: fontSize,
+              fontSize: fontSize * 1.1,
+              letterSpacing: 0.5,
             ),
           ),
         );
@@ -36,7 +36,11 @@ class BylawDetailScreen extends StatelessWidget {
         spans.add(
           TextSpan(
             text: n,
-            style: TextStyle(color: textColor, fontSize: fontSize),
+            style: TextStyle(
+              color: textColor,
+              fontSize: fontSize,
+              height: 1.6,
+            ),
           ),
         );
         return '';
@@ -49,83 +53,86 @@ class BylawDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = colorScheme.onSurface;
 
     final title = bylaw['title'] ?? 'Untitled';
     final content = bylaw['content'] ?? 'No content available';
     final chapter = bylaw['chapters'] ?? '';
 
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('By-Laws Details'),
+        title: const Text('Policies & By-Laws'),
         centerTitle: true,
-        elevation: 0,
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: surfaceColor,
-        height: 70,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Chip(
-                label: Text(
-                  'Chapter $chapter',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                side: BorderSide.none,
-              ),
-              const SizedBox(width: 8),
-              Chip(
-                label: const Text(
-                  '2019 BY-LAWS',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                side: BorderSide.none,
-              ),
-            ],
-          ),
-        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Chapter Tag
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Chapter $chapter'.toUpperCase(),
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '2019 BY-LAWS',
+                    style: TextStyle(
+                      color: colorScheme.onSecondaryContainer,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             // Title
             Text(
               title.toString(),
               style: TextStyle(
-                fontSize: settings.fontSize * 1.5,
-                fontWeight: FontWeight.bold,
+                fontSize: settings.fontSize * 1.8,
+                fontWeight: FontWeight.w900,
                 color: textColor,
+                letterSpacing: -0.8,
+                height: 1.1,
               ),
             ),
-            const SizedBox(height: 12),
-            const SizedBox(height: 24),
-            // Content Container
+            const SizedBox(height: 32),
+            // Content
             RichText(
               text: TextSpan(
                 style: const TextStyle(height: 1.6),
                 children: _buildParsedSpans(
                   content.toString(),
                   textColor,
-                  settings.fontSize,
+                  settings.fontSize * 1.1,
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 48),
             const AdBannerWidget(),
             const SizedBox(height: 32),
           ],

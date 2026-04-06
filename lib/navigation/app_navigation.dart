@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../screens/home_screen.dart';
 import '../screens/prayers_screen.dart';
 import '../screens/songs_screen.dart';
-import '../screens/menu_screen.dart';
-import '../screens/search_screen.dart'; // Import search screen
+import '../screens/menu/centers_screen.dart';
+import '../widgets/app_drawer.dart';
 
 class AppNavigation extends StatefulWidget {
   const AppNavigation({super.key});
@@ -13,122 +14,97 @@ class AppNavigation extends StatefulWidget {
 }
 
 class _AppNavigationState extends State<AppNavigation> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    PrayersScreen(),
-    SongsScreen(),
-    MenuScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    // Detect screen width for responsive layout
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final screens = [
+      HomeScreen(onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer()),
+      PrayersScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      SongsScreen(onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer()),
+      CentersScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+    ];
 
-    return Scaffold(
-      body: Row(
-        children: [
-          if (!isSmallScreen)
-            NavigationRail(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
-                child: FloatingActionButton(
-                  elevation: 0,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SearchScreen()),
-                    );
-                  },
-                  child: const Icon(Icons.search),
-                ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // 1. If we are not on Home (index 0), go back to Home
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+          return;
+        }
+
+        // 2. If we ARE on Home, show the exit confirmation dialog
+        final shouldExit = await _showExitDialog(context);
+        if (shouldExit == true) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawer: AppDrawer(
+          currentIndex: _currentIndex,
+          onSelectNavigation: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ),
+        body: IndexedStack(index: _currentIndex, children: screens),
+      ),
+    );
+  }
+
+  Future<bool?> _showExitDialog(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        icon: Icon(Icons.logout_rounded, color: colorScheme.primary),
+        title: const Text(
+          'Exit App?',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        content: const Text(
+          'Do you really want to exit the UECFI App?',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
               ),
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.menu_book_outlined),
-                  selectedIcon: Icon(Icons.menu_book),
-                  label: Text('Prayers'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.music_note_outlined),
-                  selectedIcon: Icon(Icons.music_note),
-                  label: Text('Songs'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.menu_rounded),
-                  selectedIcon: Icon(Icons.menu),
-                  label: Text('Menu'),
-                ),
-              ],
-            ),
-          if (!isSmallScreen)
-            const VerticalDivider(thickness: 1, width: 1),
-            
-          Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _screens,
             ),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.errorContainer,
+              foregroundColor: colorScheme.onErrorContainer,
+            ),
+            child: const Text(
+              'Exit',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
-      bottomNavigationBar: isSmallScreen
-          ? NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.menu_book_outlined),
-                  selectedIcon: Icon(Icons.menu_book),
-                  label: 'Prayers',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.music_note_outlined),
-                  selectedIcon: Icon(Icons.music_note),
-                  label: 'Songs',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.menu_rounded),
-                  selectedIcon: Icon(Icons.menu),
-                  label: 'Menu',
-                ),
-              ],
-            )
-          : null,
-      floatingActionButton: isSmallScreen
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchScreen()),
-                );
-              },
-              child: const Icon(Icons.search),
-            )
-          : null,
     );
   }
 }

@@ -3,18 +3,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/firestore_service.dart';
-import '../services/ad_service.dart';
 import '../providers/settings_provider.dart';
-import 'menu/edit_profile_screen.dart';
 import 'comments_screen.dart';
 import 'forms/create_post_screen.dart';
+import 'search_screen.dart';
+import '../utils/color_utils.dart';
+import 'menu/profile_screen.dart';
+import '../widgets/main_app_bar.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onOpenDrawer});
+
+  final VoidCallback? onOpenDrawer;
 
   Widget _buildEmptyState(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    final textColor = Theme.of(context).colorScheme.onSurface;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Center(
       child: Padding(
@@ -23,24 +26,24 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.forum_outlined,
+                Icons.forum_rounded,
                 size: 64,
-                color: primaryColor,
+                color: colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Text(
               'No posts yet!',
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -49,29 +52,22 @@ class HomeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: textColor.withValues(alpha: 0.6),
+                color: colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
             FilledButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const CreatePostScreen(),
+                  ),
                 );
               },
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.add_comment_outlined),
-              label: const Text(
-                'Share a Post',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              icon: const Icon(Icons.add_comment_rounded),
+              label: const Text('Share a Post'),
             ),
           ],
         ),
@@ -82,79 +78,104 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Image.asset('assets/images/image.png'),
-        ),
-        title: const Text('Community Feed'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: MainAppBar(
+        title: 'Community Forum',
+        onOpenDrawer: onOpenDrawer,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
+          ),
+        ],
       ),
-      body: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirestoreService().getCommunityPostsStream(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error loading feed: ${snapshot.error}'),
-                );
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return _buildEmptyState(context);
-              }
+      body: CustomScrollView(
+        slivers: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirestoreService().getCommunityPostsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Text('Error loading feed: ${snapshot.error}'),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildEmptyState(context),
+                    );
+                  }
 
-              // Filter out explicitly reported arrays synchronously
-              final posts = snapshot.data!.docs.where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return data['isReported'] != true;
-              }).toList();
+                  final posts = snapshot.data!.docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return data['isReported'] != true;
+                  }).toList();
 
-              if (posts.isEmpty) {
-                return _buildEmptyState(context);
-              }
+                  if (posts.isEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildEmptyState(context),
+                    );
+                  }
 
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                itemCount: posts.length + 1,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                    if (index == posts.length) return const AdBannerWidget();
-                  final postDoc = posts[index];
-                  final data = postDoc.data() as Map<String, dynamic>;
+                  return SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final postDoc = posts[index];
+                        final data = postDoc.data() as Map<String, dynamic>;
 
-                  final likedBy = List<String>.from(data['likedBy'] ?? []);
-                  final isLiked = likedBy.contains(settings.userId);
+                        final likedBy = List<String>.from(
+                          data['likedBy'] ?? [],
+                        );
+                        final isLiked = likedBy.contains(settings.userId);
 
-                  final postNode = {
-                    'id': postDoc.id,
-                    'username': data['authorNickname'] ?? 'Unknown',
-                    'avatarIndex': data['avatarIndex'] ?? 0,
-                    'time': _formatTimestamp(data['timestamp']),
-                    'content': data['content'] ?? '',
-                    'likes': data['likes'] ?? 0,
-                    'comments': data['comments'] ?? 0,
-                    'isLiked': isLiked,
-                  };
+                        final postNode = {
+                          'id': postDoc.id,
+                          'username': data['authorNickname'] ?? 'Unknown',
+                          'time': _formatTimestamp(data['timestamp']),
+                          'content': data['content'] ?? '',
+                          'likes': data['likes'] ?? 0,
+                          'comments': data['comments'] ?? 0,
+                          'isLiked': isLiked,
+                        };
 
-                  return _PostCard(
-                    key: ValueKey(postNode['id']),
-                    post: postNode,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _PostCard(
+                            key: ValueKey(postNode['id']),
+                            post: postNode,
+                          ),
+                        );
+                      }, childCount: posts.length),
+                    ),
                   );
                 },
               );
             },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
           );
         },
+        icon: const Icon(Icons.add_comment_rounded),
+        label: const Text('New Post'),
       ),
     );
   }
@@ -186,9 +207,8 @@ class _PostCardState extends State<_PostCard> {
   bool _isExpanded = false;
   late bool _isLiked;
   late int _likesCount;
-
-  // Truncation constraints
-  final int _textLimit = 150;
+  final int _textLimit = 200;
+  final GlobalKey _menuKey = GlobalKey();
 
   @override
   void initState() {
@@ -225,7 +245,6 @@ class _PostCardState extends State<_PostCard> {
   void _handleCommentAttempt(BuildContext context) {
     final settings = context.read<SettingsProvider>();
 
-    // Explicit Identity Rule: Must have valid Email, District, and Position remotely logged.
     if (settings.email.isEmpty ||
         settings.email == 'user@example.com' ||
         settings.district.isEmpty ||
@@ -233,15 +252,9 @@ class _PostCardState extends State<_PostCard> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: const Text(
-            'Profile Required',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          title: const Text('Profile Required'),
           content: const Text(
-            'You must complete your Identity Profile Setup (including District and Position strings mapped securely into the Cloud) before participating in Community discussions!',
+            'Complete your Profile Setup before participating in discussions!',
           ),
           actions: [
             TextButton(
@@ -254,14 +267,11 @@ class _PostCardState extends State<_PostCard> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const EditProfileScreen(),
+                    builder: (context) => const ProfileScreen(),
                   ),
                 );
               },
-              child: const Text(
-                'Setup Profile',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              child: const Text('Setup Profile'),
             ),
           ],
         ),
@@ -269,7 +279,6 @@ class _PostCardState extends State<_PostCard> {
       return;
     }
 
-    // Provide routing to the physical Commenting Modal Sheet!
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -278,213 +287,251 @@ class _PostCardState extends State<_PostCard> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+  void _showReportDialog() {
+    final settings = context.read<SettingsProvider>();
+    final reasons = [
+      'Spam',
+      'Harassment',
+      'False Information',
+      'Inappropriate Content',
+      'Hate Speech',
+      'Other',
+    ];
 
-    final String content = widget.post['content'] ?? '';
-    final bool isLongText = content.length > _textLimit;
-
-    final String displayText = (_isExpanded || !isLongText)
-        ? content
-        : '${content.substring(0, _textLimit)}...';
-
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header Row
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                radius: 20,
-                child: Icon(
-                  SettingsProvider.avatarIcons[widget.post['avatarIndex'] ?? 0],
-                  color: primaryColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.post['username'],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: textColor,
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Post'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select a reason for reporting this post:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            ...reasons.map(
+              (reason) => ListTile(
+                title: Text(reason),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await FirestoreService().reportPost(
+                    postId: widget.post['id'],
+                    reason: reason,
+                    reportedBy: settings.email,
+                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Post reported as "$reason".'),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    ),
-                    Text(
-                      widget.post['time'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: Icon(
-                  Icons.more_horiz,
-                  color: textColor.withValues(alpha: 0.5),
-                ),
-                onSelected: (value) async {
-                  if (value == 'report') {
-                    await FirestoreService().reportPost(widget.post['id']);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Post reported and hidden.'),
-                        ),
-                      );
-                    }
+                    );
                   }
                 },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'report',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.flag_outlined,
-                          color: Colors.redAccent,
-                          size: 20,
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Report Post',
-                          style: TextStyle(color: Colors.redAccent),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Body Content
-          Text(
-            displayText,
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.4,
-              color: textColor.withValues(alpha: 0.9),
-            ),
-          ),
-
-          // Show More / Less Toggle
-          if (isLongText)
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(top: 6.0),
-                child: Text(
-                  _isExpanded ? 'Show less' : 'Show more',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                trailing: const Icon(Icons.chevron_right_rounded),
               ),
             ),
-
-          const SizedBox(height: 16),
-          Divider(color: textColor.withValues(alpha: 0.1), height: 1),
-          const SizedBox(height: 8),
-
-          // Interaction Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _InteractionButton(
-                icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-                label: '$_likesCount',
-                color: _isLiked
-                    ? Colors.redAccent
-                    : textColor.withValues(alpha: 0.6),
-                onTap: _toggleLike,
-              ),
-              _InteractionButton(
-                icon: Icons.chat_bubble_outline,
-                label: '${widget.post['comments']}',
-                color: textColor.withValues(alpha: 0.6),
-                onTap: () => _handleCommentAttempt(context),
-              ),
-              _InteractionButton(
-                icon: Icons.ios_share_outlined,
-                label: 'Share',
-                color: textColor.withValues(alpha: 0.6),
-                onTap: () {
-                  final textToShare =
-                      '${widget.post['username']} shared on UECFI: "${widget.post['content']}"';
-                  SharePlus.instance.share(ShareParams(text: textToShare));
-                },
-              ),
-            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
         ],
       ),
     );
   }
-}
-
-class _InteractionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _InteractionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+    final colorScheme = Theme.of(context).colorScheme;
+    final String content = widget.post['content'] ?? '';
+    final bool isLongText = content.length > _textLimit;
+    final String displayText = (_isExpanded || !isLongText)
+        ? content
+        : '${content.substring(0, _textLimit)}...';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Row(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 6),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: widget.post['username'] == 'DEVELOPER'
+                      ? Colors.amber.shade700
+                      : ColorUtils.getAvatarColor(widget.post['username']),
+                  radius: 22,
+                  child: widget.post['username'] == 'DEVELOPER'
+                      ? const Icon(
+                          Icons.verified_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        )
+                      : Text(
+                          widget.post['username'].isNotEmpty
+                              ? widget.post['username'][0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.post['username'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        widget.post['time'],
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  key: _menuKey,
+                  icon: const Icon(Icons.more_horiz_rounded, size: 20),
+                  onPressed: () {
+                    final RenderBox button =
+                        _menuKey.currentContext!.findRenderObject()
+                            as RenderBox;
+                    final RenderBox overlay =
+                        Overlay.of(context).context.findRenderObject()
+                            as RenderBox;
+                    final RelativeRect position = RelativeRect.fromRect(
+                      Rect.fromPoints(
+                        button.localToGlobal(Offset.zero, ancestor: overlay),
+                        button.localToGlobal(
+                          button.size.bottomRight(Offset.zero),
+                          ancestor: overlay,
+                        ),
+                      ),
+                      Offset.zero & overlay.size,
+                    );
+                    showMenu<String>(
+                      context: context,
+                      position: position,
+                      items: [
+                        const PopupMenuItem(
+                          value: 'report',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.flag_rounded,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Report Post',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ).then((value) {
+                      if (value == 'report') {
+                        _showReportDialog();
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Text(
-              label,
+              displayText,
               style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: 16,
+                height: 1.6,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w400,
               ),
+            ),
+            if (isLongText)
+              GestureDetector(
+                onTap: () => setState(() => _isExpanded = !_isExpanded),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _isExpanded ? 'Show less' : 'Show more',
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                _InteractionPill(
+                  icon: _isLiked
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_outline_rounded,
+                  label: '$_likesCount',
+                  isHighlighted: _isLiked,
+                  highlightColor: Colors.redAccent,
+                  onTap: _toggleLike,
+                ),
+                const SizedBox(width: 12),
+                _InteractionPill(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: '${widget.post['comments']}',
+                  onTap: () => _handleCommentAttempt(context),
+                ),
+                const Spacer(),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  onPressed: () {
+                    final text =
+                        '${widget.post['username']} shared: "${widget.post['content']}"';
+                    SharePlus.instance.share(ShareParams(text: text));
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -493,4 +540,62 @@ class _InteractionButton extends StatelessWidget {
   }
 }
 
+class _InteractionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isHighlighted;
+  final Color? highlightColor;
+  final VoidCallback onTap;
 
+  const _InteractionPill({
+    required this.icon,
+    required this.label,
+    this.isHighlighted = false,
+    this.highlightColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = isHighlighted
+        ? (highlightColor ?? colorScheme.primary)
+        : colorScheme.onSurfaceVariant;
+
+    return Material(
+      color: isHighlighted ? color.withValues(alpha: 0.1) : Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isHighlighted
+                  ? color.withValues(alpha: 0.2)
+                  : colorScheme.outlineVariant,
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

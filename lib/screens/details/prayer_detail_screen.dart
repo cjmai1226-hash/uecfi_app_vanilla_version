@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/ad_service.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/main_app_bar.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prayer;
@@ -30,7 +31,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
           TextSpan(
             text: m.group(0),
             style: TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               color: textColor,
               fontSize: fontSize,
             ),
@@ -42,7 +43,11 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         spans.add(
           TextSpan(
             text: n,
-            style: TextStyle(color: textColor, fontSize: fontSize),
+            style: TextStyle(
+              color: textColor,
+              fontSize: fontSize,
+              height: 1.6,
+            ),
           ),
         );
         return '';
@@ -71,98 +76,98 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     final currentTitle = isTagalog ? tagalogTitle : ilocanoTitle;
     final currentContent = isTagalog ? tagalogContent : ilocanoContent;
 
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = colorScheme.onSurface;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isProjectMode ? 'Projecting' : 'Prayer Details'),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isProjectMode ? Icons.cast_connected : Icons.cast,
-              color: _isProjectMode ? primaryColor : textColor,
+      appBar: _isProjectMode
+          ? null
+          : MainAppBar(
+              title: 'Prayer Detail',
+              showBackButton: true,
+              actions: [
+                IconButton(
+                  tooltip: 'Projector Mode',
+                  onPressed: () => setState(() => _isProjectMode = true),
+                  icon: const Icon(Icons.cast_rounded),
+                ),
+              ],
             ),
-            onPressed: () {
-              setState(() {
-                _isProjectMode = !_isProjectMode;
-              });
-            },
-          ),
-        ],
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: _isProjectMode
-              ? const EdgeInsets.all(8.0)
-              : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              ? const EdgeInsets.symmetric(horizontal: 32, vertical: 48)
+              : const EdgeInsets.fromLTRB(24, 16, 24, 32),
           child: Column(
             crossAxisAlignment: _isProjectMode
                 ? CrossAxisAlignment.center
                 : CrossAxisAlignment.start,
             children: [
               if (!_isProjectMode) ...[
+                // Category Tag
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: Text(
+                    category.toString().toUpperCase(),
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // Title
                 Text(
                   currentTitle.toString(),
                   style: TextStyle(
-                    fontSize: settings.fontSize * 1.5,
-                    fontWeight: FontWeight.bold,
+                    fontSize: settings.fontSize * 1.8,
+                    fontWeight: FontWeight.w900,
                     color: textColor,
+                    letterSpacing: -0.8,
+                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
               // Content Container
               RichText(
                 textAlign: _isProjectMode
                     ? TextAlign.center
-                    : TextAlign.justify,
+                    : TextAlign.start,
                 text: TextSpan(
-                  style: const TextStyle(height: 1.5),
+                  style: const TextStyle(height: 1.6),
                   children: _buildParsedSpans(
                     currentContent.toString(),
                     textColor,
                     _isProjectMode
-                        ? settings.fontSize * 2.5
-                        : settings.fontSize,
+                        ? settings.fontSize * 2.8
+                        : settings.fontSize * 1.1,
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
               const AdBannerWidget(),
               const SizedBox(height: 32),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _isProjectMode
-          ? null
-          : BottomAppBar(
-              color: surfaceColor,
-              height: 70,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Chip(
-                      label: Text(
-                        category.toString(),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
-                      side: BorderSide.none,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      floatingActionButton: _isProjectMode
+          ? FloatingActionButton.large(
+              heroTag: 'prayer_project_exit',
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              onPressed: () => setState(() => _isProjectMode = false),
+              child: const Icon(Icons.close_rounded),
+            )
+          : null,
     );
   }
 }

@@ -12,13 +12,11 @@ class FirestoreService {
     required String content,
     required String authorEmail,
     required String authorNickname,
-    required int avatarIndex,
   }) async {
     await _firestore.collection('community_posts').add({
       'content': content,
       'authorEmail': authorEmail,
       'authorNickname': authorNickname,
-      'avatarIndex': avatarIndex,
       'timestamp': FieldValue.serverTimestamp(),
       'likes': 0,
       'comments': 0,
@@ -102,6 +100,24 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  // 4b. Check if email exists
+  Future<bool> checkEmailExists(String email) async {
+    if (email.isEmpty) return false;
+    final doc = await _firestore.collection('users').doc(email).get();
+    return doc.exists;
+  }
+
+  // 4c. Check if nickname exists
+  Future<bool> checkNicknameExists(String nickname) async {
+    if (nickname.isEmpty) return false;
+    final query = await _firestore
+        .collection('users')
+        .where('name', isEqualTo: nickname)
+        .limit(1)
+        .get();
+    return query.docs.isNotEmpty;
+  }
+
   // 5. Get Community Posts Stream
   Stream<QuerySnapshot> getCommunityPostsStream() {
     return _firestore
@@ -137,7 +153,6 @@ class FirestoreService {
     required String content,
     required String authorEmail,
     required String authorNickname,
-    required int avatarIndex,
   }) async {
     final postRef = _firestore.collection('community_posts').doc(postId);
 
@@ -146,7 +161,6 @@ class FirestoreService {
       'content': content,
       'authorEmail': authorEmail,
       'authorNickname': authorNickname,
-      'avatarIndex': avatarIndex,
       'timestamp': FieldValue.serverTimestamp(),
     });
 
@@ -165,9 +179,16 @@ class FirestoreService {
   }
 
   // 9. Report Post
-  Future<void> reportPost(String postId) async {
+  Future<void> reportPost({
+    required String postId,
+    required String reason,
+    required String reportedBy,
+  }) async {
     await _firestore.collection('community_posts').doc(postId).set({
       'isReported': true,
+      'reportReason': reason,
+      'reportedBy': reportedBy,
+      'reportedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 

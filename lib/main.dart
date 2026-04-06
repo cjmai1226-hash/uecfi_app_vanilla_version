@@ -7,29 +7,25 @@ import 'navigation/app_navigation.dart';
 import 'theme/app_theme.dart';
 import 'providers/settings_provider.dart';
 import 'providers/bookmark_provider.dart';
-// import 'services/notification_service.dart';
 import 'services/ad_service.dart';
+import 'screens/onboarding/welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isAndroid || Platform.isIOS) {
+    debugPrint("✅Initializing AdMob...");
     await AdService().initializeMobileAds();
     AdService().loadAndShowAppOpenAd();
+  } else {
+    debugPrint("❌Unsupported platform - AdMob disabled");
   }
+
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
 
   try {
-    // if (Platform.isAndroid || Platform.isIOS) {
-    //   try {
-    //     await NotificationService().init();
-    //   } catch(e) {
-    //     debugPrint("Notifications init failed: $e");
-    //   }
-    // }
-
     if (Platform.isWindows) {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
@@ -45,8 +41,9 @@ void main() async {
     } else {
       await Firebase.initializeApp();
     }
+    debugPrint("✅Firebase initialized successfully");
   } catch (e) {
-    debugPrint("Firebase initialization error: $e");
+    debugPrint("❌Firebase initialization error: $e");
   }
 
   runApp(
@@ -74,7 +71,9 @@ class MainApp extends StatelessWidget {
         seedColor: settings.colorSeed,
         fontStyle: settings.fontStyle,
       ),
-      home: const AppNavigation(),
+      home: settings.isProfileSetup && settings.hasAcceptedTerms
+          ? const AppNavigation()
+          : const WelcomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

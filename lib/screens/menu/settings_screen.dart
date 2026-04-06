@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/ad_service.dart';
-import 'package:in_app_review/in_app_review.dart';
 import '../../providers/settings_provider.dart';
+import '../../utils/color_utils.dart';
+import '../../widgets/main_app_bar.dart';
+import 'profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   final List<Color> _colorChoices = const [
     Colors.blueAccent,
+    Color(0xFF007FFF), // Azure Blue
     Colors.redAccent,
     Colors.green,
     Colors.orange,
@@ -21,41 +24,61 @@ class SettingsScreen extends StatelessWidget {
   void _showColorPickerBottomSheet(
     BuildContext context,
     Color currentColor,
-    Color surfaceColor,
-    Color textColor,
+    ColorScheme colorScheme,
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: surfaceColor,
+      backgroundColor: colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (BuildContext ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 24.0,
-              horizontal: 24.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: Text(
-                    'Choose Color Seed',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.7,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(32, 16, 32, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.2,
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                Center(
-                  child: Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Theme Color',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pick a color to personalize your application experience.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
                     alignment: WrapAlignment.center,
                     children: _colorChoices.map((color) {
                       final isSelected =
@@ -67,33 +90,44 @@ class SettingsScreen extends StatelessWidget {
                           );
                           Navigator.pop(ctx);
                         },
-                        child: Container(
-                          width: 48,
-                          height: 48,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 64,
+                          height: 64,
                           decoration: BoxDecoration(
                             color: color,
                             shape: BoxShape.circle,
                             border: isSelected
-                                ? Border.all(color: textColor, width: 3)
+                                ? Border.all(
+                                    color: colorScheme.onSurface,
+                                    width: 4,
+                                  )
                                 : null,
-                            boxShadow: [
-                              if (isSelected)
-                                BoxShadow(
-                                  color: color.withValues(alpha: 0.5),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                            ],
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.4),
+                                      blurRadius: 16,
+                                      spreadRadius: 4,
+                                    ),
+                                  ]
+                                : [],
                           ),
+                          child: isSelected
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  color: colorScheme.onSurface,
+                                  size: 32,
+                                )
+                              : null,
                         ),
                       );
                     }).toList(),
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -102,286 +136,496 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        children: [
-          // Appearance Group
-          _buildFormGroup(
-            context: context,
-            surfaceColor: surfaceColor,
-            children: [
-              _buildSwitchTile(
-                title: 'Dark Mode',
-                icon: Icons.dark_mode_outlined,
-                value: settings.isDarkMode,
-                onChanged: (val) =>
-                    context.read<SettingsProvider>().toggleDarkMode(val),
-                textColor: textColor,
-                seedColor: settings.colorSeed,
-              ),
-              _buildColorSeedTile(
-                context: context,
-                textColor: textColor,
-                surfaceColor: surfaceColor,
-                currentColor: settings.colorSeed,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Typography Group
-          _buildFormGroup(
-            context: context,
-            surfaceColor: surfaceColor,
-            children: [
-              _buildDropdownTile(
-                title: 'Font Style',
-                icon: Icons.font_download_outlined,
-                value: settings.fontStyle,
-                items: ['Inter', 'Roboto', 'Open Sans', 'System'],
-                onChanged: (val) =>
-                    context.read<SettingsProvider>().updateFontStyle(val!),
-                textColor: textColor,
-              ),
-              _buildSliderTile(
-                title: 'Font Size',
-                icon: Icons.format_size_outlined,
-                value: settings.fontSize,
-                min: 12.0,
-                max: 30.0,
-                onChanged: (val) =>
-                    context.read<SettingsProvider>().updateFontSize(val),
-                textColor: textColor,
-                seedColor: settings.colorSeed,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // App Preferences Group
-          _buildFormGroup(
-            context: context,
-            surfaceColor: surfaceColor,
-            children: [
-              _buildDropdownTile(
-                title: 'Prayer Language',
-                icon: Icons.language_outlined,
-                value: settings.prayerLanguage,
-                items: ['Ilocano', 'Tagalog'],
-                onChanged: (val) =>
-                    context.read<SettingsProvider>().updatePrayerLanguage(val!),
-                textColor: textColor,
-              ),
-              _buildSwitchTile(
-                title: 'Show Chords',
-                icon: Icons.music_note_outlined,
-                value: settings.showChords,
-                onChanged: (val) {
-                  if (val) {
-                    AdService().showRewardedAdDialog(
-                      context: context,
-                      title: 'Enable Show Chords',
-                      content: 'Watch a short ad to unlock chord views?',
-                      onReward: () {
-                        context.read<SettingsProvider>().toggleShowChords(true);
-                      },
-                    );
-                  } else {
-                    context.read<SettingsProvider>().toggleShowChords(false);
-                  }
-                },
-                textColor: textColor,
-                seedColor: settings.colorSeed,
-              ),
-              _buildSwitchTile(
-                title: 'Chord Shapes',
-                icon: Icons.grid_view_outlined,
-                value: settings.showChordShapes,
-                onChanged: (val) {
-                  if (!settings.showChords) {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enable Show Chords first'),
-                        duration: Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
+      appBar: const MainAppBar(title: 'Settings', showBackButton: true),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
+                children: [
+                  _buildProfileHeader(context, settings, colorScheme),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Appearance', colorScheme),
+                  _buildSettingsCard(
+                    context,
+                    children: [
+                      _buildSwitchTile(
+                        title: 'Dark Mode',
+                        subtitle:
+                            'Use a darker color palette for a more comfortable night-time experience',
+                        icon: Icons.dark_mode_rounded,
+                        value: settings.isDarkMode,
+                        onChanged: (val) => context
+                            .read<SettingsProvider>()
+                            .toggleDarkMode(val),
+                        colorScheme: colorScheme,
+                        seedColor: settings.colorSeed,
                       ),
-                    );
-                    return;
-                  }
-                  context.read<SettingsProvider>().toggleShowChordShapes(val);
-                },
-                textColor: settings.showChords
-                    ? textColor
-                    : textColor.withValues(alpha: 0.5),
-                seedColor: settings.colorSeed,
-              ),
-              _buildDropdownTile(
-                title: 'Chord Instrument',
-                icon: Icons.music_note_outlined,
-                value: settings.chordInstrument,
-                items: ['Guitar', 'Ukulele'],
-                onChanged: (val) => context
-                    .read<SettingsProvider>()
-                    .updateChordInstrument(val!),
-                textColor: textColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+                      _buildColorSeedTile(
+                        context: context,
+                        colorScheme: colorScheme,
+                        currentColor: settings.colorSeed,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('Typography', colorScheme),
+                  _buildSettingsCard(
+                    context,
+                    children: [
+                      _buildDropdownTile(
+                        title: 'Font Style',
+                        subtitle:
+                            'Choose your preferred typeface for the entire application',
+                        icon: Icons.font_download_rounded,
+                        value: settings.fontStyle,
+                        items: ['Inter', 'Roboto', 'Open Sans', 'System'],
+                        onChanged: (val) => context
+                            .read<SettingsProvider>()
+                            .updateFontStyle(val!),
+                        colorScheme: colorScheme,
+                      ),
+                      _buildSliderTile(
+                        title: 'Font Size',
+                        subtitle:
+                            'Adjust the text scale to improve readability across all screens',
+                        icon: Icons.format_size_rounded,
+                        value: settings.fontSize,
+                        min: 12.0,
+                        max: 30.0,
+                        onChanged: (val) => context
+                            .read<SettingsProvider>()
+                            .updateFontSize(val),
+                        colorScheme: colorScheme,
+                        seedColor: settings.colorSeed,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('App Preferences', colorScheme),
+                  _buildSettingsCard(
+                    context,
+                    children: [
+                      _buildDropdownTile(
+                        title: 'Prayer Language',
+                        subtitle:
+                            'Select the primary language for prayers and religious content',
+                        icon: Icons.language_rounded,
+                        value: settings.prayerLanguage,
+                        items: ['Ilocano', 'Tagalog'],
+                        onChanged: (val) => context
+                            .read<SettingsProvider>()
+                            .updatePrayerLanguage(val!),
+                        colorScheme: colorScheme,
+                      ),
+                      _buildSwitchTile(
+                        title: 'Show Chords',
+                        subtitle:
+                            'Enable interactive chord views for songs and hymns',
+                        icon: Icons.music_note_rounded,
+                        value: settings.showChords,
+                        onChanged: (val) {
+                          if (val) {
+                            AdService().showRewardedAdDialog(
+                              context: context,
+                              title: 'Enable Show Chords',
+                              content:
+                                  'Watch a short ad to unlock chord views?',
+                              onReward: () => context
+                                  .read<SettingsProvider>()
+                                  .toggleShowChords(true),
+                            );
+                          } else {
+                            context.read<SettingsProvider>().toggleShowChords(
+                              false,
+                            );
+                          }
+                        },
+                        colorScheme: colorScheme,
+                        seedColor: settings.colorSeed,
+                      ),
+                      _buildSwitchTile(
+                        title: 'Chord Shapes',
+                        subtitle:
+                            'Display visual finger positions for the selected instrument',
+                        icon: Icons.grid_view_rounded,
+                        value: settings.showChordShapes,
+                        onChanged: (val) {
+                          if (!settings.showChords) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please enable Show Chords first',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+                          context
+                              .read<SettingsProvider>()
+                              .toggleShowChordShapes(val);
+                        },
+                        colorScheme: colorScheme,
+                        seedColor: settings.colorSeed,
+                        isEnabled: settings.showChords,
+                      ),
+                      _buildDropdownTile(
+                        title: 'Chord Instrument',
+                        subtitle:
+                            'Choose between Guitar or Ukulele for chord diagrams',
+                        icon: Icons.music_note_rounded,
+                        value: settings.chordInstrument,
+                        items: ['Guitar', 'Ukulele'],
+                        onChanged: (val) => context
+                            .read<SettingsProvider>()
+                            .updateChordInstrument(val!),
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
 
-          // About Group
-          _buildFormGroup(
-            context: context,
-            surfaceColor: surfaceColor,
-            children: [
-              _buildActionTile(
-                title: 'Rate this app',
-                icon: Icons.star_outline,
-                iconColor: Colors.amber,
-                onTap: () async {
-                  final InAppReview inAppReview = InAppReview.instance;
-                  if (await inAppReview.isAvailable()) {
-                    inAppReview.requestReview();
-                  } else {
-                    // Fallback to store page if native dialog is unavailable
-                    inAppReview.openStoreListing(
-                      appStoreId: 'replace_with_your_ios_app_id',
-                    );
-                  }
-                },
-                textColor: textColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              'Vanilla 1.0.0',
-              style: TextStyle(
-                color: textColor.withValues(alpha: 0.5),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                  _buildSystemInfo(colorScheme),
+                  const SizedBox(height: 48),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildFormGroup({
-    required BuildContext context,
-    required List<Widget> children,
-    required Color surfaceColor,
-  }) {
-    return Material(
-      color: surfaceColor,
-      borderRadius: BorderRadius.circular(10),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: ListTile.divideTiles(
-          context: context,
-          tiles: children,
-        ).toList(),
+  Widget _buildSectionHeader(String title, ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 16),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.primary,
+          letterSpacing: 0.1,
+        ),
       ),
+    );
+  }
+
+  Widget _buildProfileHeader(
+    BuildContext context,
+    SettingsProvider settings,
+    ColorScheme colorScheme,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: ColorUtils.getAvatarColor(settings.nickname),
+              child: Text(
+                settings.nickname.isNotEmpty
+                    ? settings.nickname[0].toUpperCase()
+                    : 'U',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    settings.nickname,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Text(
+                    settings.email,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton.filledTonal(
+              onPressed: () {}, // This could link to profile edit if needed
+              icon: const Icon(Icons.qr_code_2_rounded),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSystemInfo(ColorScheme colorScheme) {
+    return Column(
+      children: [
+        const Divider(height: 1),
+        const SizedBox(height: 24),
+        Text(
+          'UECFI App',
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Version 2.4.0 • Build 2026',
+          style: TextStyle(
+            color: colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '© 2026 DevChristian. All rights reserved.',
+          style: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsCard(
+    BuildContext context, {
+    required List<Widget> children,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(28),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: children),
     );
   }
 
   Widget _buildSwitchTile({
     required String title,
+    required String subtitle,
     required IconData icon,
     required bool value,
     required ValueChanged<bool> onChanged,
-    required Color textColor,
+    required ColorScheme colorScheme,
     required Color seedColor,
+    bool isEnabled = true,
   }) {
-    return _buildBaseTile(
-      title: title,
-      icon: icon,
-      trailing: Switch(
-        value: value,
-        activeThumbColor: seedColor,
-        activeTrackColor: seedColor.withValues(alpha: 0.5),
-        onChanged: onChanged,
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? colorScheme.primaryContainer.withValues(alpha: 0.4)
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
+          color: isEnabled
+              ? colorScheme.primary
+              : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+        ),
       ),
-      textColor: textColor,
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: isEnabled
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          color: colorScheme.onSurfaceVariant,
+          height: 1.3,
+        ),
+      ),
+      trailing: Switch.adaptive(
+        value: value,
+        activeTrackColor: seedColor,
+        onChanged: isEnabled ? onChanged : null,
+      ),
     );
   }
 
   Widget _buildDropdownTile({
     required String title,
+    required String subtitle,
     required IconData icon,
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
-    required Color textColor,
+    required ColorScheme colorScheme,
   }) {
-    return _buildBaseTile(
-      title: title,
-      icon: icon,
-      trailing: DropdownButton<String>(
-        value: value,
-        underline: const SizedBox(),
-        dropdownColor: textColor == Colors.white
-            ? Colors.grey[850]
-            : Colors.white,
-        icon: const Icon(Icons.unfold_more, color: Colors.grey),
-        onChanged: onChanged,
-        items: items.map<DropdownMenuItem<String>>((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item, style: TextStyle(fontSize: 14, color: textColor)),
-          );
-        }).toList(),
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: colorScheme.primary),
       ),
-      textColor: textColor,
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          color: colorScheme.onSurfaceVariant,
+          height: 1.3,
+        ),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: DropdownButton<String>(
+          value: value,
+          underline: const SizedBox(),
+          dropdownColor: colorScheme.surface,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: colorScheme.primary,
+            size: 18,
+          ),
+          onChanged: onChanged,
+          items: items.map<DropdownMenuItem<String>>((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
   Widget _buildSliderTile({
     required String title,
+    required String subtitle,
     required IconData icon,
     required double value,
     required double min,
     required double max,
     required ValueChanged<double> onChanged,
-    required Color textColor,
+    required ColorScheme colorScheme,
     required Color seedColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: textColor),
-          const SizedBox(width: 16),
-          Text(title, style: TextStyle(fontSize: 16, color: textColor)),
-          Expanded(
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              activeColor: seedColor,
-              onChanged: onChanged,
-            ),
-          ),
-          SizedBox(
-            width: 24, // Keeps the row from jittering while sliding numbers
-            child: Text(
-              '${value.toInt()}',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textColor.withValues(alpha: 0.6),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: colorScheme.primary),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${value.toInt()}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            activeColor: seedColor,
+            onChanged: onChanged,
           ),
         ],
       ),
@@ -390,58 +634,26 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildColorSeedTile({
     required BuildContext context,
-    required Color textColor,
-    required Color surfaceColor,
+    required ColorScheme colorScheme,
     required Color currentColor,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(Icons.color_lens_outlined, color: textColor),
-      title: Text(
-        'Color Seed',
-        style: TextStyle(fontSize: 16, color: textColor),
+      leading: Icon(Icons.palette_rounded, color: colorScheme.primary),
+      title: const Text(
+        'Theme Color',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       trailing: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(color: currentColor, shape: BoxShape.circle),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: currentColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: colorScheme.outlineVariant, width: 2),
+        ),
       ),
-      onTap: () => _showColorPickerBottomSheet(
-        context,
-        currentColor,
-        surfaceColor,
-        textColor,
-      ),
-    );
-  }
-
-  Widget _buildActionTile({
-    required String title,
-    required IconData icon,
-    required VoidCallback onTap,
-    required Color textColor,
-    Color? iconColor,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: iconColor ?? textColor),
-      title: Text(title, style: TextStyle(fontSize: 16, color: textColor)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildBaseTile({
-    required String title,
-    required IconData icon,
-    required Widget trailing,
-    required Color textColor,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: textColor),
-      title: Text(title, style: TextStyle(fontSize: 16, color: textColor)),
-      trailing: trailing,
+      onTap: () =>
+          _showColorPickerBottomSheet(context, currentColor, colorScheme),
     );
   }
 }

@@ -4,16 +4,11 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-
-  // IMPORTANT: INCREMENT this number by +1 before building for the Play Store
-  // whenever you make changes to the 'assets/db/uecfi.db' file.
-  // This tells the app to overwrite the old database with the new one.
-  static const int _currentDbVersion =
-      2; // Increased to 2 to trigger a fresh copy for this update
 
   factory DatabaseHelper() {
     return _instance;
@@ -32,13 +27,19 @@ class DatabaseHelper {
     final path = join(dbPath, 'uecfi.db');
 
     final prefs = await SharedPreferences.getInstance();
-    final int copiedDbVersion = prefs.getInt('copiedDbVersion') ?? 0;
+    final packageInfo = await PackageInfo.fromPlatform();
+    
+    // Get the build number (e.g., "27") as an integer for comparison
+    final int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+    final int lastCopiedBuildNumber = prefs.getInt('lastCopiedDbBuildNumber') ?? 0;
 
     // Check if the database exists
     final exists = await databaseExists(path);
 
-    // If DB missing OR our app updated to a newer DB version, we copy it over
-    if (!exists || copiedDbVersion < _currentDbVersion) {
+    // If DB is missing OR the app has been updated to a new build number
+    if (!exists || lastCopiedBuildNumber < currentBuildNumber) {
+      debugPrint('Database update detected (Build $lastCopiedBuildNumber -> $currentBuildNumber). Syncing assets...');
+      
       // Make sure the parent directory exists
       try {
         await Directory(dirname(path)).create(recursive: true);
@@ -50,17 +51,23 @@ class DatabaseHelper {
       }
 
       // Copy from assets
-      ByteData data = await rootBundle.load('assets/db/uecfi.db');
-      List<int> bytes = data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      );
+      try {
+        ByteData data = await rootBundle.load('assets/db/uecfi.db');
+        List<int> bytes = data.buffer.asUint8List(
+          data.offsetInBytes,
+          data.lengthInBytes,
+        );
 
-      // Write and flush the bytes written
-      await File(path).writeAsBytes(bytes, flush: true);
+        // Write and flush the bytes written
+        await File(path).writeAsBytes(bytes, flush: true);
 
-      // Save the new version so it doesn't copy again until you increase _currentDbVersion
-      await prefs.setInt('copiedDbVersion', _currentDbVersion);
+        // Save the current build number to prevent re-copying until the next Play Store update
+        await prefs.setInt('lastCopiedDbBuildNumber', currentBuildNumber);
+        debugPrint('Database synced successfully for Build $currentBuildNumber');
+      } catch (e) {
+        debugPrint('Error copying database from assets: $e');
+        // If copy fails and DB doesn't exist, this will cause issues, but we log it.
+      }
     }
 
     // Open the database
@@ -156,18 +163,13 @@ class DatabaseHelper {
       'centerlocation',
       'centerdistrict',
     ]);
-    final bylaws = await searchTable('bylaws', 'By-Laws', query, [
-      'title',
-      'content',
-      'chapters',
-    ]);
 
     final List<Map<String, dynamic>> allResults = [];
     allResults.addAll(prayers);
     allResults.addAll(songs);
     allResults.addAll(centers);
-    allResults.addAll(bylaws);
 
     return allResults;
   }
+
 }

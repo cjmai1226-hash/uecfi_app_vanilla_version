@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
-import '../menu/edit_profile_screen.dart';
+import '../menu/profile_screen.dart';
 
 class UpdateCenterScreen extends StatefulWidget {
   final Map<String, dynamic> centerNode;
@@ -14,15 +14,12 @@ class UpdateCenterScreen extends StatefulWidget {
 }
 
 class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
-  String _selectedType = 'Location Locator'; // Default Dropdown value
+  String _selectedType = 'Location Locator';
   bool _isSubmitting = false;
 
-  // Location Controllers
   final _latLngController = TextEditingController();
   final _mapsLinkController = TextEditingController();
   final _locationNotesController = TextEditingController();
-
-  // Contact Controllers
   final _nameController = TextEditingController();
   final _positionController = TextEditingController();
   final _contactNumberController = TextEditingController();
@@ -48,16 +45,23 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(28),
           ),
-          title: const Text('Account Setup Required'),
+          title: const Text(
+            'Account Setup Required',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
           content: const Text(
             'To maintain community trust and data integrity, please update your profile nickname and email before submitting suggestions.',
+            style: TextStyle(height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
             FilledButton(
               onPressed: () {
@@ -65,11 +69,14 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const EditProfileScreen(),
+                    builder: (context) => const ProfileScreen(),
                   ),
                 );
               },
-              child: const Text('Go to Profile'),
+              child: const Text(
+                'Go to Profile',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -77,7 +84,6 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
       return;
     }
 
-    // Determine which check to run based on the selected dropdown form
     if (_selectedType == 'Location Locator') {
       if (_latLngController.text.isEmpty && _mapsLinkController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -86,6 +92,7 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
               'Please provide either Latitude/Longitude or a Google Maps Link.',
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         return;
@@ -97,62 +104,51 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
           SnackBar(
             content: const Text('Please provide the Contact Name and Number.'),
             backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         return;
       }
 
-      // Explicit consent dialog for privacy
       final bool? consent = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(28),
           ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.privacy_tip_outlined,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Consent Required',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ],
+          icon: Icon(
+            Icons.privacy_tip_rounded,
+            color: Theme.of(context).colorScheme.primary,
+            size: 32,
+          ),
+          title: const Text(
+            'Consent Required',
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
           content: const Text(
-            'Do you have the explicit consent of this person to share their direct contact information within the community directory?',
+            'Do you have the explicit consent of this person to share their contact information within the community directory?',
+            textAlign: TextAlign.center,
             style: TextStyle(height: 1.4, fontSize: 15),
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(context, false), // Dismiss and return false
+              onPressed: () => Navigator.pop(context, false),
               child: const Text(
                 'No, cancel',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
             FilledButton(
-              onPressed: () =>
-                  Navigator.pop(context, true), // Proceed and return true
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+              onPressed: () => Navigator.pop(context, true),
               child: const Text(
                 'Yes, I have consent',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
       );
 
-      // Halt submission if they hit No or dismissed the dialog
       if (consent != true) return;
     }
 
@@ -195,7 +191,7 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context); // Go back to Center Details
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -213,215 +209,198 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
     }
   }
 
+  Widget _buildModernField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+    ColorScheme colorScheme, {
+    bool isPhone = false,
+    String? helperText,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+        maxLines: maxLines,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
+          filled: true,
+          fillColor: colorScheme.surfaceContainerLow,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide.none,
+          ),
+          helperText: helperText,
+          helperStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            fontSize: 11,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Suggest Update'),
         centerTitle: true,
-        elevation: 0,
         actions: [
           _isSubmitting
               ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                   child: SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : TextButton.icon(
+              : IconButton.filled(
+                  tooltip: 'Submit',
+                  icon: const Icon(Icons.send_rounded, size: 18),
                   onPressed: _submitUpdate,
-                  icon: const Icon(Icons.send_rounded, size: 20),
-                  label: const Text(
-                    'Submit',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
           children: [
-            // Header Description
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 16.0,
-              ),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(15),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Text(
-                'Help us keep the directory accurate! Select the type of information you are contributing for ${widget.centerNode['centername'] ?? 'this center'}.',
+                'Contributing updates for ${widget.centerNode['centername'] ?? 'this center'}. All suggestions are reviewed by the community.',
                 style: TextStyle(
-                  color: primaryColor,
-                  fontSize: 14,
+                  color: colorScheme.onPrimaryContainer,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   height: 1.4,
                 ),
               ),
             ),
             const SizedBox(height: 24),
-
-            // Form Content Block
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Information Type',
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 8),
+                  child: Text(
+                    'INFORMATION TYPE',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: textColor.withValues(alpha: 0.6),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
+                      letterSpacing: 1,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedType,
-                    dropdownColor: surfaceColor,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: textColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: textColor.withValues(alpha: 0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                    ),
-                    items: ['Location Locator', 'Contact Person']
-                        .map(
-                          (type) =>
-                              DropdownMenuItem(value: type, child: Text(type)),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedType = value;
-                        });
-                      }
-                    },
+                ),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedType,
+                  dropdownColor: colorScheme.surface,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 24),
-
-                  // Dynamic Form Injection based on explicit Dropdown string
-                  if (_selectedType == 'Location Locator') ...[
-                    _buildTextField(
-                      _latLngController,
-                      'Latitude / Longitude',
-                      Icons.explore_outlined,
-                      textColor,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
                     ),
-                    _buildTextField(
-                      _mapsLinkController,
-                      'Google Maps Link',
-                      Icons.add_link,
-                      textColor,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
                     ),
-                    _buildTextField(
-                      _locationNotesController,
-                      'Additional Notes (Optional)',
-                      Icons.notes,
-                      textColor,
-                    ),
-                  ] else ...[
-                    _buildTextField(
-                      _nameController,
-                      'Contact Name',
-                      Icons.person_outline,
-                      textColor,
-                    ),
-                    _buildTextField(
-                      _positionController,
-                      'Role / Position',
-                      Icons.badge_outlined,
-                      textColor,
-                      helperText: 'Example: (Member or Local President)',
-                    ),
-                    _buildTextField(
-                      _contactNumberController,
-                      'Contact Number',
-                      Icons.phone_outlined,
-                      textColor,
-                      isPhone: true,
-                    ),
-                    _buildTextField(
-                      _contactNotesController,
-                      'Additional Notes (Optional)',
-                      Icons.notes,
-                      textColor,
-                    ),
-                  ],
+                  ),
+                  items: ['Location Locator', 'Contact Person']
+                      .map(
+                        (type) => DropdownMenuItem(
+                          value: type,
+                          child: Text(
+                            type,
+                            style: TextStyle(color: colorScheme.onSurface),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _selectedType = value);
+                  },
+                ),
+                const SizedBox(height: 24),
+                if (_selectedType == 'Location Locator') ...[
+                  _buildModernField(
+                    _latLngController,
+                    'Latitude / Longitude',
+                    Icons.explore_rounded,
+                    colorScheme,
+                  ),
+                  _buildModernField(
+                    _mapsLinkController,
+                    'Google Maps Link',
+                    Icons.link_rounded,
+                    colorScheme,
+                  ),
+                  _buildModernField(
+                    _locationNotesController,
+                    'Additional Notes',
+                    Icons.notes_rounded,
+                    colorScheme,
+                    maxLines: 3,
+                  ),
+                ] else ...[
+                  _buildModernField(
+                    _nameController,
+                    'Contact Name',
+                    Icons.person_rounded,
+                    colorScheme,
+                  ),
+                  _buildModernField(
+                    _positionController,
+                    'Role / Position',
+                    Icons.badge_rounded,
+                    colorScheme,
+                    helperText: 'Example: Local President',
+                  ),
+                  _buildModernField(
+                    _contactNumberController,
+                    'Contact Number',
+                    Icons.phone_rounded,
+                    colorScheme,
+                    isPhone: true,
+                  ),
+                  _buildModernField(
+                    _contactNotesController,
+                    'Additional Notes',
+                    Icons.notes_rounded,
+                    colorScheme,
+                    maxLines: 3,
+                  ),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 32),
-
-            const SizedBox(height: 20),
-            const SizedBox(height: 20),
           ],
-        ),
-      ),
-    );
-  }
-
-  // Helper widget to rapidly construct matching standard UI TextField configurations
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    IconData icon,
-    Color textColor, {
-    bool isPhone = false,
-    String? helperText,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-        style: TextStyle(
-          fontSize: 16,
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: hint,
-          prefixIcon: Icon(icon, size: 20, color: textColor.withValues(alpha: 0.6)),
-          filled: true,
-          fillColor: textColor.withValues(alpha: 0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          helperText: helperText,
-          helperStyle: TextStyle(
-            color: textColor.withValues(alpha: 0.5),
-            fontSize: 12,
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );

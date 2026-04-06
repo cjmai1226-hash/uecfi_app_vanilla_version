@@ -44,9 +44,13 @@ class AdService {
   AppOpenAd? _appOpenAd;
   InterstitialAd? _interstitialAd;
   int _interstitialClickCount = 0;
+  
+  bool get isSupportedPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   Future<void> initializeMobileAds() async {
+    if (!isSupportedPlatform) return;
     await MobileAds.instance.initialize();
+    debugPrint('AdMob initialized successfully');
   }
 
   String get _appOpenId {
@@ -81,6 +85,7 @@ class AdService {
 
   // AppOpen Ad for Cold Start
   void loadAndShowAppOpenAd() {
+    if (!isSupportedPlatform) return;
     AppOpenAd.load(
       adUnitId: _appOpenId,
       request: const AdRequest(),
@@ -99,6 +104,7 @@ class AdService {
 
   // Interstitial Ad
   void showInterstitialAd({bool requireCounter = false}) {
+    if (!isSupportedPlatform) return;
     if (requireCounter) {
       _interstitialClickCount++;
       // Show ad every 3 clicks
@@ -130,6 +136,10 @@ class AdService {
     String title = 'Support Us',
     String content = 'Watch a short ad to continue?',
   }) async {
+    if (!isSupportedPlatform) {
+      onReward();
+      return;
+    }
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -207,7 +217,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void initState() {
     super.initState();
-    _createBannerAd();
+    if (AdService().isSupportedPlatform) {
+      _createBannerAd();
+    }
   }
 
   void _createBannerAd() {
@@ -239,13 +251,15 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   void dispose() {
-    _bannerAd.dispose();
+    if (AdService().isSupportedPlatform) {
+      _bannerAd.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isAdLoaded) {
+    if (!AdService().isSupportedPlatform || !_isAdLoaded) {
       return const SizedBox.shrink();
     }
     return Center(

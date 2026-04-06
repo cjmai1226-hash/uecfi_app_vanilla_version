@@ -1,34 +1,76 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/settings_provider.dart';
 import '../services/database_helper.dart';
 import 'details/prayer_detail_screen.dart';
 import 'details/song_detail_screen.dart';
 import 'details/center_detail_screen.dart';
-import 'details/bylaw_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({
+    super.key,
+    this.autoFocusField = false,
+    this.initialFilter,
+  });
+
+  final bool autoFocusField;
+  final String? initialFilter;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  static const String _recentSearchesKey = 'recent_searches';
+  static const int _maxRecentSearches = 10;
+
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Prayers', 'Songs', 'Centers', 'By-Laws'];
+  final List<String> _filters = ['All', 'Prayers', 'Songs', 'Centers'];
   final List<String> _recentSearches = [];
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   Timer? _debounce;
 
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
 
+  void _requestSearchFocus() {
+    if (!mounted) return;
+    _searchFocusNode.requestFocus();
+    SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+
+    Future<void>.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      _searchFocusNode.requestFocus();
+      SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter ?? 'All';
     _searchController.addListener(_onSearchChanged);
+    _loadRecentSearches();
+
+    if (widget.autoFocusField) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _requestSearchFocus();
+      });
+    }
+  }
+
+  Future<void> _loadRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_recentSearchesKey) ?? [];
+    if (!mounted) return;
+    setState(() {
+      _recentSearches.clear();
+      _recentSearches.addAll(saved);
+    });
   }
 
   void _onSearchChanged() {
@@ -49,27 +91,41 @@ class _SearchScreenState extends State<SearchScreen> {
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
-  void _clearRecentSearches() {
+  Future<void> _saveRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_recentSearchesKey, _recentSearches);
+  }
+
+  Future<void> _clearRecentSearches() async {
     setState(() {
       _recentSearches.clear();
     });
+    await _saveRecentSearches();
   }
 
-  Future<void> _performSearch(String query) async {
+  void _addToRecentSearches(String query) {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) return;
+    _recentSearches.removeWhere(
+      (item) => item.toLowerCase() == normalizedQuery.toLowerCase(),
+    );
+    _recentSearches.insert(0, normalizedQuery);
+    if (_recentSearches.length > _maxRecentSearches) {
+      _recentSearches.removeRange(_maxRecentSearches, _recentSearches.length);
+    }
+    unawaited(_saveRecentSearches());
+  }
+
+  Future<void> _performSearch(String query, {bool saveToRecent = false}) async {
     if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-      });
+      setState(() => _searchResults = []);
       return;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     List<Map<String, dynamic>> results = [];
     final dbHelper = DatabaseHelper();
 
@@ -95,194 +151,103 @@ class _SearchScreenState extends State<SearchScreen> {
         'centerdistrict',
         'centerlocation',
       ]);
-    } else if (_selectedFilter == 'By-Laws') {
-      results = await dbHelper.searchTable('bylaws', 'By-Laws', query, [
-        'title',
-        'content',
-        'chapters',
-      ]);
     }
 
     setState(() {
       _searchResults = results;
       _isLoading = false;
-      if (!_recentSearches.contains(query)) {
-        _recentSearches.insert(0, query);
-      }
+      if (saveToRecent) _addToRecentSearches(query);
     });
   }
 
-  Widget _buildSearchResults(Color textColor, bool isTagalog) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+  TextSpan _buildHighlightedTextSpan({
+    required String text,
+    required String query,
+    required TextStyle normalStyle,
+    required TextStyle highlightStyle,
+  }) {
+    final terms = query
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((term) => term.isNotEmpty)
+        .toSet()
+        .toList();
+    if (terms.isEmpty || text.isEmpty) {
+      return TextSpan(text: text, style: normalStyle);
     }
+    final escapedTerms = terms.map(RegExp.escape).join('|');
+    final matchRegex = RegExp('($escapedTerms)', caseSensitive: false);
+    final matches = matchRegex.allMatches(text).toList();
+    if (matches.isEmpty) return TextSpan(text: text, style: normalStyle);
 
-    if (_searchResults.isEmpty && _searchController.text.isNotEmpty) {
-      return Center(
-        child: Text(
-          'No results found for "${_searchController.text}"',
-          style: TextStyle(color: textColor.withValues(alpha: 0.5)),
+    final children = <TextSpan>[];
+    var currentIndex = 0;
+    for (final match in matches) {
+      if (match.start > currentIndex) {
+        children.add(
+          TextSpan(
+            text: text.substring(currentIndex, match.start),
+            style: normalStyle,
+          ),
+        );
+      }
+      children.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: highlightStyle,
         ),
       );
+      currentIndex = match.end;
     }
-
-    if (_searchController.text.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Searches',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-                if (_recentSearches.isNotEmpty)
-                  TextButton(
-                    onPressed: _clearRecentSearches,
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(50, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text('Clear'),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _recentSearches.isEmpty
-                ? Center(
-                    child: Text(
-                      'No recent searches',
-                      style: TextStyle(color: textColor.withValues(alpha: 0.5)),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _recentSearches.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: Icon(
-                          Icons.history,
-                          color: textColor.withValues(alpha: 0.5),
-                        ),
-                        title: Text(
-                          _recentSearches[index],
-                          style: TextStyle(color: textColor),
-                        ),
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          color: textColor.withValues(alpha: 0.5),
-                          size: 20,
-                        ),
-                        onTap: () {
-                          _searchController.text = _recentSearches[index];
-                          _performSearch(_recentSearches[index]);
-                        },
-                      );
-                    },
-                  ),
-          ),
-        ],
+    if (currentIndex < text.length) {
+      children.add(
+        TextSpan(text: text.substring(currentIndex), style: normalStyle),
       );
     }
+    return TextSpan(children: children);
+  }
 
-    return ListView.separated(
-      itemCount: _searchResults.length,
-      separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 0.5),
-      itemBuilder: (context, index) {
-        final item = _searchResults[index];
-        final type = item['type'];
-
-        String title = '';
-        String subtitle = '';
-        IconData icon = Icons.article;
-
-        if (type == 'Prayer') {
-          final ilocanoTitle = item['title'] ?? 'Unknown Prayer';
-          final tagalogTitle = item['title1'] ?? ilocanoTitle;
-          title = isTagalog ? tagalogTitle : ilocanoTitle;
-          subtitle = 'Prayer • Page ${item['page'] ?? ''}';
-          icon = Icons.menu_book;
-        } else if (type == 'Song') {
-          title = item['title'] ?? 'Unknown Song';
-          subtitle = 'Song • ${item['category'] ?? ''}';
-          icon = Icons.music_note;
-        } else if (type == 'Center') {
-          title = item['centername']?.toString() ?? 'Unknown Center';
-          final district = item['centerdistrict']?.toString() ?? '';
-          final address = item['centeraddress']?.toString() ?? '';
-          
-          if (district.isNotEmpty && address.isNotEmpty) {
-            subtitle = '$district • $address';
-          } else {
-            subtitle = district.isNotEmpty ? district : (address.isNotEmpty ? address : 'No details provided');
-          }
-          icon = Icons.church_outlined;
-        } else if (type == 'By-Laws') {
-          title = item['title'] ?? 'Unknown By-Law';
-          subtitle = 'By-Law • Chapter ${item['chapters'] ?? ''}';
-          icon = Icons.gavel_outlined;
-        }
-
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.1),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-          ),
-          title: Text(
-            title,
-            style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: TextStyle(color: textColor.withValues(alpha: 0.6)),
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            // Navigate to appropriate detail screen
-            if (type == 'Prayer') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PrayerDetailScreen(prayer: item),
-                ),
-              );
-            } else if (type == 'Song') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SongDetailScreen(song: item),
-                ),
-              );
-            } else if (type == 'Center') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CenterDetailScreen(centerNode: item),
-                ),
-              );
-            } else if (type == 'By-Laws') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BylawDetailScreen(bylaw: item),
-                ),
-              );
-            }
-          },
-        );
-      },
+  Widget _buildEmptyState({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: colorScheme.primary.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -290,116 +255,288 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final isTagalog = settings.prayerLanguage == 'Tagalog';
-
-    // Rely exclusively on theme mappings
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final textColor = Theme.of(context).colorScheme.onSurface;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: BackButton(color: textColor),
-        title: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: textColor.withValues(alpha: 0.05), // Dynamic subtle grey
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: TextField(
-            controller: _searchController,
-            style: TextStyle(color: textColor),
-            decoration: InputDecoration(
-              hintText: 'Search',
-              hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
-              border: InputBorder.none,
-              prefixIcon: Icon(
-                Icons.search,
-                color: textColor.withValues(alpha: 0.5),
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: Icon(
-                        Icons.clear,
-                        color: textColor.withValues(alpha: 0.5),
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchResults = [];
-                        });
-                      },
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            ),
-            onSubmitted: (value) {
-              if (value.isNotEmpty) {
-                _performSearch(value);
-              }
-            },
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            color: surfaceColor,
-            icon: Icon(
-              Icons.filter_list,
-              color: _selectedFilter != 'All'
-                  ? Theme.of(context).colorScheme.primary
-                  : textColor,
-            ),
-            onSelected: (String result) {
-              setState(() {
-                _selectedFilter = result;
-              });
-              // Perform a search automatically if text exists
-              if (_searchController.text.isNotEmpty) {
-                _performSearch(_searchController.text);
-              }
-            },
-            itemBuilder: (BuildContext context) =>
-                _filters.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(
-                      choice,
-                      style: TextStyle(
-                        fontWeight: choice == _selectedFilter
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: choice == _selectedFilter
-                            ? Theme.of(context).colorScheme.primary
-                            : textColor,
-                      ),
-                    ),
-                  );
-                }).toList(),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_selectedFilter != 'All')
+      body: SafeArea(
+        child: Column(
+          children: [
+            // --- Custom Google-Style Search Header ---
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
-                'Searching in: $_selectedFilter',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Material(
+                color: colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(32),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      const BackButton(),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          autofocus: widget.autoFocusField,
+                          textInputAction: TextInputAction.search,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          decoration: InputDecoration(
+                            hintText: 'Search community...',
+                            hintStyle: TextStyle(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                            ),
+                          ),
+                          onSubmitted: (value) {
+                            if (value.isNotEmpty) {
+                              _performSearch(value, saveToRecent: true);
+                            }
+                          },
+                        ),
+                      ),
+                      if (_searchController.text.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchResults = []);
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          Expanded(child: _buildSearchResults(textColor, isTagalog)),
-        ],
+
+            // --- Sticky Filter Chips ---
+            Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: _filters.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final filter = _filters[index];
+                  final isSelected = _selectedFilter == filter;
+                  return ChoiceChip(
+                    label: Text(filter),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _selectedFilter = filter);
+                        if (_searchController.text.isNotEmpty) {
+                          _performSearch(_searchController.text);
+                        }
+                      }
+                    },
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // --- Results / Recent Searches ---
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _searchController.text.isEmpty
+                  ? _buildRecentSearches()
+                  : _buildSearchResults(isTagalog),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildRecentSearches() {
+    if (_recentSearches.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.search_rounded,
+        title: 'Start searching',
+        subtitle: 'Find prayers, songs, and centers instantly.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
+              TextButton(
+                onPressed: _clearRecentSearches,
+                child: const Text('Clear all'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _recentSearches.length,
+            itemBuilder: (context, index) {
+              final query = _recentSearches[index];
+              return ListTile(
+                leading: const Icon(Icons.history_rounded),
+                title: Text(
+                  query,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.north_west_rounded, size: 18),
+                  onPressed: () => _searchController.text = query,
+                ),
+                onTap: () {
+                  _searchController.text = query;
+                  _performSearch(query, saveToRecent: true);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResults(bool isTagalog) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (_searchResults.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.search_off_rounded,
+        title: 'No results',
+        subtitle:
+            'We couldn\'t find anything matching "${_searchController.text}"',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      itemCount: _searchResults.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final item = _searchResults[index];
+        final type = item['type'];
+
+        String title = '';
+        String subtitle = '';
+        IconData icon = Icons.article_rounded;
+
+        if (type == 'Prayer') {
+          title = isTagalog
+              ? (item['title1'] ?? item['title'])
+              : (item['title'] ?? 'Untitled');
+          subtitle = 'Prayer • Page ${item['page'] ?? ''}';
+          icon = Icons.auto_stories_rounded;
+        } else if (type == 'Song') {
+          title = item['title'] ?? 'Untitled';
+          subtitle = 'Song • ${item['category'] ?? ''}';
+          icon = Icons.music_note_rounded;
+        } else if (type == 'Center') {
+          title = item['centername']?.toString() ?? 'Center';
+          subtitle =
+              '${item['centerdistrict'] ?? ''} • ${item['centeraddress'] ?? ''}';
+          icon = Icons.church_rounded;
+        }
+
+        return Material(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: colorScheme.primary, size: 22),
+            ),
+            title: RichText(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              text: _buildHighlightedTextSpan(
+                text: title,
+                query: _searchController.text,
+                normalStyle: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  letterSpacing: -0.5,
+                ),
+                highlightStyle: TextStyle(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                  backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+            subtitle: Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
+            onTap: () {
+              if (type == 'Prayer') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PrayerDetailScreen(prayer: item),
+                  ),
+                );
+              } else if (type == 'Song') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SongDetailScreen(song: item),
+                  ),
+                );
+              } else if (type == 'Center') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CenterDetailScreen(centerNode: item),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -12,9 +12,8 @@ class SettingsProvider with ChangeNotifier {
   bool _showChordShapes = false;
   String _chordInstrument = 'Guitar';
   String _nickname = 'User';
-  String _email = 'user@example.com';
+  String _email = '';
   String _userId = '';
-  int _avatarIndex = 0;
   String _district = '';
   String _position = '';
   String _firstName = '';
@@ -26,17 +25,8 @@ class SettingsProvider with ChangeNotifier {
   String _area = '';
   String _centerName = '';
   String _centerAddress = '';
+  bool _hasAcceptedTerms = false;
 
-  static const List<IconData> avatarIcons = [
-    Icons.person,
-    Icons.face,
-    Icons.emoji_emotions,
-    Icons.account_circle,
-    Icons.pets,
-    Icons.music_note,
-    Icons.favorite,
-    Icons.star,
-  ];
 
   bool get isDarkMode => _isDarkMode;
   double get fontSize => _fontSize;
@@ -49,7 +39,6 @@ class SettingsProvider with ChangeNotifier {
   String get nickname => _nickname;
   String get email => _email;
   String get userId => _userId;
-  int get avatarIndex => _avatarIndex;
   String get district => _district;
   String get position => _position;
   String get firstName => _firstName;
@@ -61,10 +50,11 @@ class SettingsProvider with ChangeNotifier {
   String get area => _area;
   String get centerName => _centerName;
   String get centerAddress => _centerAddress;
+  bool get hasAcceptedTerms => _hasAcceptedTerms;
 
   bool get isProfileSetup =>
       _nickname != 'User' &&
-      _email != 'user@example.com' &&
+      _email.isNotEmpty &&
       _firstName.isNotEmpty &&
       _surname.isNotEmpty;
 
@@ -89,9 +79,8 @@ class SettingsProvider with ChangeNotifier {
       _chordInstrument = 'Guitar';
     }
     _nickname = prefs.getString('nickname') ?? 'User';
-    _email = prefs.getString('email') ?? 'user@example.com';
+    _email = prefs.getString('email') ?? '';
     _userId = prefs.getString('userId') ?? '';
-    _avatarIndex = prefs.getInt('avatarIndex') ?? 0;
     _district = prefs.getString('district') ?? '';
     _position = prefs.getString('position') ?? '';
     _firstName = prefs.getString('firstName') ?? '';
@@ -103,6 +92,7 @@ class SettingsProvider with ChangeNotifier {
     _area = prefs.getString('area') ?? '';
     _centerName = prefs.getString('centerName') ?? '';
     _centerAddress = prefs.getString('centerAddress') ?? '';
+    _hasAcceptedTerms = prefs.getBool('hasAcceptedTerms') ?? false;
 
     if (_userId.isEmpty) {
       const numbers = '0123456789';
@@ -181,7 +171,6 @@ class SettingsProvider with ChangeNotifier {
   void updateProfile(
     String nickname,
     String email,
-    int avatarIndex,
     String district,
     String position,
     String firstName,
@@ -196,7 +185,6 @@ class SettingsProvider with ChangeNotifier {
   ) async {
     _nickname = nickname;
     _email = email;
-    _avatarIndex = avatarIndex;
     _district = district;
     _position = position;
     _firstName = firstName;
@@ -213,7 +201,6 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('nickname', nickname);
     prefs.setString('email', email);
-    prefs.setInt('avatarIndex', avatarIndex);
     prefs.setString('district', district);
     prefs.setString('position', position);
     prefs.setString('firstName', firstName);
@@ -231,7 +218,6 @@ class SettingsProvider with ChangeNotifier {
     String userId,
     String nickname,
     String email,
-    int avatarIndex,
     String district,
     String position,
     String firstName,
@@ -247,7 +233,6 @@ class SettingsProvider with ChangeNotifier {
     _userId = userId;
     _nickname = nickname;
     _email = email;
-    _avatarIndex = avatarIndex;
     _district = district;
     _position = position;
     _firstName = firstName;
@@ -265,7 +250,6 @@ class SettingsProvider with ChangeNotifier {
     prefs.setString('userId', userId);
     prefs.setString('nickname', nickname);
     prefs.setString('email', email);
-    prefs.setInt('avatarIndex', avatarIndex);
     prefs.setString('district', district);
     prefs.setString('position', position);
     prefs.setString('firstName', firstName);
@@ -277,5 +261,12 @@ class SettingsProvider with ChangeNotifier {
     prefs.setString('area', area);
     prefs.setString('centerName', centerName);
     prefs.setString('centerAddress', centerAddress);
+  }
+
+  void setHasAcceptedTerms(bool value) async {
+    _hasAcceptedTerms = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('hasAcceptedTerms', value);
   }
 }
