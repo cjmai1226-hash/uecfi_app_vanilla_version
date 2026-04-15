@@ -179,6 +179,8 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
         centerId: widget.centerNode['id']?.toString() ?? 'unknown',
         centerName:
             widget.centerNode['centername']?.toString() ?? 'Unknown Center',
+        centerAddress:
+            widget.centerNode['centeraddress']?.toString() ?? 'No address',
         updateType: _selectedType,
         payload: payload,
         submittedByEmail: settings.email,

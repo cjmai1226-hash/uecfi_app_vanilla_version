@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/firestore_service.dart';
 import '../providers/settings_provider.dart';
+import '../services/ad_service.dart';
 import 'comments_screen.dart';
 import 'forms/create_post_screen.dart';
 import 'search_screen.dart';
@@ -130,7 +131,7 @@ class HomeScreen extends StatelessWidget {
                   }
 
                   return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final postDoc = posts[index];
@@ -164,6 +165,15 @@ class HomeScreen extends StatelessWidget {
                 },
               );
             },
+          ),
+          const SliverToBoxAdapter(
+            child: Column(
+              children: [
+                SizedBox(height: 32),
+                AdBannerWidget(),
+                SizedBox(height: 80), // To avoid overlapping with FAB
+              ],
+            ),
           ),
         ],
       ),

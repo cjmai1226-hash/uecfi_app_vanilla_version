@@ -48,6 +48,7 @@ class FirestoreService {
   Future<void> submitCenterUpdate({
     required String centerId,
     required String centerName,
+    required String centerAddress,
     required String updateType,
     required Map<String, dynamic> payload,
     required String submittedByEmail,
@@ -55,6 +56,7 @@ class FirestoreService {
     await _firestore.collection('center_updates').add({
       'centerId': centerId,
       'centerName': centerName,
+      'centerAddress': centerAddress,
       'updateType': updateType, // 'Location Locator' or 'Contact Person'
       'payload': payload,
       'submittedBy': submittedByEmail,

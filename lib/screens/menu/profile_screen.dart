@@ -53,7 +53,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _addressController = TextEditingController(text: settings.address);
     _areaController = TextEditingController(text: settings.area);
     _centerNameController = TextEditingController(text: settings.centerName);
-    _centerAddressController = TextEditingController(text: settings.centerAddress);
+    _centerAddressController = TextEditingController(
+      text: settings.centerAddress,
+    );
   }
 
   @override
@@ -122,7 +124,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Discard Changes?'),
-        content: const Text('Are you sure you want to discard your edits? All changes will be lost.'),
+        content: const Text(
+          'Are you sure you want to discard your edits? All changes will be lost.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -168,12 +172,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (newNickname != settings.nickname) {
       setState(() => _isSaving = true);
       try {
-        final isTaken = await FirestoreService().checkNicknameExists(newNickname);
+        final isTaken = await FirestoreService().checkNicknameExists(
+          newNickname,
+        );
         if (isTaken) {
           if (mounted) {
             messenger.showSnackBar(
               SnackBar(
-                content: const Text('This nickname is already taken. Please choose a unique one for the community feed.'),
+                content: const Text(
+                  'This nickname is already taken. Please choose a unique one for the community feed.',
+                ),
                 backgroundColor: theme.colorScheme.error,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -186,7 +194,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Continue if check fails? Or stop? Better stop.
         if (mounted) {
           messenger.showSnackBar(
-            SnackBar(content: Text('Error validating nickname: $e'), backgroundColor: theme.colorScheme.error),
+            SnackBar(
+              content: Text('Error validating nickname: $e'),
+              backgroundColor: theme.colorScheme.error,
+            ),
           );
           setState(() => _isSaving = false);
         }
@@ -198,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
-      context.read<SettingsProvider>().updateProfile(
+      settings.updateProfile(
         _nicknameController.text,
         _emailController.text,
         _districtController.text,
@@ -233,7 +244,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!'), behavior: SnackBarBehavior.floating),
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         setState(() => _isEditing = false);
       }
@@ -271,7 +285,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               )
             else ...[
@@ -301,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 32),
             _buildProfileHeader(context, settings, colorScheme),
             const SizedBox(height: 24),
-            
+
             // Member ID Card
             Container(
               width: double.infinity,
@@ -309,7 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: colorScheme.secondaryContainer.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: colorScheme.secondary.withValues(alpha: 0.1),
+                ),
               ),
               child: Row(
                 children: [
@@ -319,7 +339,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: colorScheme.secondary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.badge_rounded, color: colorScheme.secondary, size: 24),
+                    child: Icon(
+                      Icons.badge_rounded,
+                      color: colorScheme.secondary,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -357,7 +381,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.copy_rounded, color: colorScheme.secondary, size: 20),
+                    icon: Icon(
+                      Icons.copy_rounded,
+                      color: colorScheme.secondary,
+                      size: 20,
+                    ),
                     tooltip: 'Copy ID',
                   ),
                 ],
@@ -365,7 +393,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 24),
-            if (!_isEditing && completion < 1.0) _buildCompletionCard(context, completion, colorScheme),
+            if (!_isEditing && completion < 1.0)
+              _buildCompletionCard(context, completion, colorScheme),
             const SizedBox(height: 16),
             _buildCardSection(
               context,
@@ -388,8 +417,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.phone_outlined,
                   label: 'Phone',
                   value: settings.phoneNumber,
-                  onTap: () => _launchUrl('tel:${settings.phoneNumber}'),
                   keyboardType: TextInputType.phone,
+                  readOnly: true,
                 ),
                 _buildInfoTile(
                   context,
@@ -566,8 +595,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SettingsProvider settings,
     ColorScheme colorScheme,
   ) {
-    final String nickname = _isEditing ? _nicknameController.text : settings.nickname;
-    final String initial = nickname.isNotEmpty ? nickname[0].toUpperCase() : '?';
+    final String nickname = _isEditing
+        ? _nicknameController.text
+        : settings.nickname;
+    final String initial = nickname.isNotEmpty
+        ? nickname[0].toUpperCase()
+        : '?';
     final Color avatarColor = ColorUtils.getAvatarColor(nickname);
 
     return Column(
@@ -578,8 +611,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? Colors.amber.shade700
               : avatarColor,
           child: nickname == 'DEVELOPER'
-              ? const Icon(Icons.verified_rounded,
-                  color: Colors.white, size: 64)
+              ? const Icon(
+                  Icons.verified_rounded,
+                  color: Colors.white,
+                  size: 64,
+                )
               : Text(
                   initial,
                   style: const TextStyle(
@@ -605,7 +641,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               decoration: InputDecoration(
                 hintText: 'Enter Nickname',
-                border: UnderlineInputBorder(borderSide: BorderSide(color: colorScheme.primary)),
+                border: UnderlineInputBorder(
+                  borderSide: BorderSide(color: colorScheme.primary),
+                ),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -633,12 +671,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCompletionCard(BuildContext context, double percentage, ColorScheme colorScheme) {
+  Widget _buildCompletionCard(
+    BuildContext context,
+    double percentage,
+    ColorScheme colorScheme,
+  ) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.1), width: 1),
+        side: BorderSide(
+          color: colorScheme.primary.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       color: colorScheme.primary.withValues(alpha: 0.05),
       child: Padding(
@@ -654,7 +699,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Text(
                     'Complete your profile',
                     style: TextStyle(
-                      fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.2,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ),
@@ -679,7 +726,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               'Add more details to make it easier for the center to reach you.',
               style: TextStyle(
-                fontSize: 12, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7), height: 1.4,
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                height: 1.4,
               ),
             ),
           ],
@@ -708,7 +757,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 title.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w900, color: colorScheme.primary, letterSpacing: 1.2,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
@@ -740,7 +792,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool readOnly = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final displayValue = value.isEmpty ? 'Click to add' : value;
+    final displayValue = value.isEmpty ? 'Click the edit button to add' : value;
     final isPlaceholder = value.isEmpty;
 
     if (_isEditing) {
@@ -757,7 +809,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             labelText: label,
             prefixIcon: Icon(icon, size: 20, color: colorScheme.primary),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 12,
+            ),
           ),
         ),
       );
@@ -766,21 +821,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ListTile(
       onTap: onTap,
       leading: Icon(
-        icon, 
-        color: isPlaceholder ? colorScheme.primary.withValues(alpha: 0.3) : colorScheme.primary, size: 20,
+        icon,
+        color: isPlaceholder
+            ? colorScheme.primary.withValues(alpha: 0.3)
+            : colorScheme.primary,
+        size: 20,
       ),
       title: Text(
         displayValue,
         style: TextStyle(
           fontSize: 16,
-          color: isPlaceholder ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4) : colorScheme.onSurface,
+          color: isPlaceholder
+              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
+              : colorScheme.onSurface,
           fontWeight: isPlaceholder ? FontWeight.w400 : FontWeight.w700,
         ),
       ),
       subtitle: Text(
         label,
         style: TextStyle(
-          fontSize: 12, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6), fontWeight: FontWeight.w500,
+          fontSize: 12,
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          fontWeight: FontWeight.w500,
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

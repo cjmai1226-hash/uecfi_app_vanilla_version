@@ -401,7 +401,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Version 2.4.0 • Build 2026',
+          'Version 1.0.1 • Build 28',
           style: TextStyle(
             color: colorScheme.onSurfaceVariant,
             fontSize: 12,
