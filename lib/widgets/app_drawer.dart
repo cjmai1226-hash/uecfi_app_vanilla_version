@@ -56,13 +56,14 @@ class AppDrawer extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
       width: MediaQuery.of(context).size.width * 0.60,
-      child: Column(
-        children: [
+      child: SafeArea(
+        child: Column(
+          children: [
           // ── Scrollable Menu Content ─────────────────────────────────
           Expanded(
             child: ListView(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 16,
+              padding: const EdgeInsets.only(
+                top: 16,
                 left: 12,
                 right: 12,
                 bottom: 8,
@@ -178,13 +179,13 @@ class AppDrawer extends StatelessWidget {
               ],
             ),
           ),
-
           // ── Fixed Footer ───────────────────────────────────────────
           _buildFixedFooter(context),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionLabel(BuildContext context, String label) {
     return Padding(

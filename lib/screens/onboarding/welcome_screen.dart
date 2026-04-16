@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'setup_screen.dart';
+import '../menu/recover_profile_screen.dart';
+
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -99,6 +101,40 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Log In to Existing Account Button
+              SizedBox(
+                width: double.infinity,
+                height: 64,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecoverProfileScreen(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    side: BorderSide(
+                      color: colorScheme.primary.withValues(alpha: 0.5),
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    'Log In to Existing Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               Text(
                 'It only takes a minute to set up.',
                 style: TextStyle(

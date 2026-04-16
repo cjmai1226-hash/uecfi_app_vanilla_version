@@ -68,6 +68,7 @@ class _RecoverProfileScreenState extends State<RecoverProfileScreen> {
             data['centerName'] ?? '',
             data['centerAddress'] ?? '',
           );
+          settings.setHasAcceptedTerms(true);
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
