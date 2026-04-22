@@ -122,8 +122,10 @@ class FirestoreService {
 
   // 5. Get Community Posts Stream
   Stream<QuerySnapshot> getCommunityPostsStream() {
+    final threshold = DateTime.now().subtract(const Duration(days: 5));
     return _firestore
         .collection('community_posts')
+        .where('timestamp', isGreaterThanOrEqualTo: threshold)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
