@@ -19,9 +19,6 @@ class SettingsProvider with ChangeNotifier {
   String _firstName = '';
   String _middleName = '';
   String _surname = '';
-  String _dob = '';
-  String _phoneNumber = '';
-  String _address = '';
   String _area = '';
   String _centerName = '';
   String _centerAddress = '';
@@ -44,9 +41,6 @@ class SettingsProvider with ChangeNotifier {
   String get firstName => _firstName;
   String get middleName => _middleName;
   String get surname => _surname;
-  String get dob => _dob;
-  String get phoneNumber => _phoneNumber;
-  String get address => _address;
   String get area => _area;
   String get centerName => _centerName;
   String get centerAddress => _centerAddress;
@@ -86,9 +80,6 @@ class SettingsProvider with ChangeNotifier {
     _firstName = prefs.getString('firstName') ?? '';
     _middleName = prefs.getString('middleName') ?? '';
     _surname = prefs.getString('surname') ?? '';
-    _dob = prefs.getString('dob') ?? '';
-    _phoneNumber = prefs.getString('phoneNumber') ?? '';
-    _address = prefs.getString('address') ?? '';
     _area = prefs.getString('area') ?? '';
     _centerName = prefs.getString('centerName') ?? '';
     _centerAddress = prefs.getString('centerAddress') ?? '';
@@ -176,9 +167,6 @@ class SettingsProvider with ChangeNotifier {
     String firstName,
     String middleName,
     String surname,
-    String dob,
-    String phoneNumber,
-    String address,
     String area,
     String centerName,
     String centerAddress,
@@ -190,9 +178,6 @@ class SettingsProvider with ChangeNotifier {
     _firstName = firstName;
     _middleName = middleName;
     _surname = surname;
-    _dob = dob;
-    _phoneNumber = phoneNumber;
-    _address = address;
     _area = area;
     _centerName = centerName;
     _centerAddress = centerAddress;
@@ -206,9 +191,6 @@ class SettingsProvider with ChangeNotifier {
     prefs.setString('firstName', firstName);
     prefs.setString('middleName', middleName);
     prefs.setString('surname', surname);
-    prefs.setString('dob', dob);
-    prefs.setString('phoneNumber', phoneNumber);
-    prefs.setString('address', address);
     prefs.setString('area', area);
     prefs.setString('centerName', centerName);
     prefs.setString('centerAddress', centerAddress);
@@ -223,9 +205,6 @@ class SettingsProvider with ChangeNotifier {
     String firstName,
     String middleName,
     String surname,
-    String dob,
-    String phoneNumber,
-    String address,
     String area,
     String centerName,
     String centerAddress,
@@ -238,9 +217,6 @@ class SettingsProvider with ChangeNotifier {
     _firstName = firstName;
     _middleName = middleName;
     _surname = surname;
-    _dob = dob;
-    _phoneNumber = phoneNumber;
-    _address = address;
     _area = area;
     _centerName = centerName;
     _centerAddress = centerAddress;
@@ -255,9 +231,6 @@ class SettingsProvider with ChangeNotifier {
     prefs.setString('firstName', firstName);
     prefs.setString('middleName', middleName);
     prefs.setString('surname', surname);
-    prefs.setString('dob', dob);
-    prefs.setString('phoneNumber', phoneNumber);
-    prefs.setString('address', address);
     prefs.setString('area', area);
     prefs.setString('centerName', centerName);
     prefs.setString('centerAddress', centerAddress);

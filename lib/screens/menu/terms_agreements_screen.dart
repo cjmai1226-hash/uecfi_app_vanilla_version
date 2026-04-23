@@ -32,9 +32,10 @@ class _TermsAgreementsScreenState extends State<TermsAgreementsScreen> {
         // Hide back button during onboarding to prevent accidental exit
         automaticallyImplyLeading: !widget.isOnboarding,
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
               child: Container(
@@ -146,9 +147,6 @@ class _TermsAgreementsScreenState extends State<TermsAgreementsScreen> {
                                   firstName: settings.firstName,
                                   middleName: settings.middleName,
                                   surname: settings.surname,
-                                  dob: settings.dob,
-                                  phoneNumber: settings.phoneNumber,
-                                  address: settings.address,
                                   position: settings.position,
                                   district: settings.district,
                                   area: settings.area,
@@ -195,6 +193,7 @@ class _TermsAgreementsScreenState extends State<TermsAgreementsScreen> {
             ),
         ],
       ),
+    ),
     );
   }
 

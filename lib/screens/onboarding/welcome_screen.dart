@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'setup_screen.dart';
-import '../menu/recover_profile_screen.dart';
-
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -11,22 +9,23 @@ class WelcomeScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              colorScheme.primary.withValues(alpha: 0.1),
-              colorScheme.surface,
-              colorScheme.surface,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary.withValues(alpha: 0.1),
+                colorScheme.surface,
+                colorScheme.surface,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -100,39 +99,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Log In to Existing Account Button
-              SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RecoverProfileScreen(),
-                      ),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    side: BorderSide(
-                      color: colorScheme.primary.withValues(alpha: 0.5),
-                      width: 2,
-                    ),
-                  ),
-                  child: Text(
-                    'Log In to Existing Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ),
+
               const SizedBox(height: 16),
 
               Text(
@@ -148,6 +115,7 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -26,9 +26,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _firstNameController;
   late TextEditingController _middleNameController;
   late TextEditingController _surnameController;
-  late TextEditingController _dobController;
-  late TextEditingController _phoneNumberController;
-  late TextEditingController _addressController;
   late TextEditingController _areaController;
   late TextEditingController _centerNameController;
   late TextEditingController _centerAddressController;
@@ -48,9 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _firstNameController = TextEditingController(text: settings.firstName);
     _middleNameController = TextEditingController(text: settings.middleName);
     _surnameController = TextEditingController(text: settings.surname);
-    _dobController = TextEditingController(text: settings.dob);
-    _phoneNumberController = TextEditingController(text: settings.phoneNumber);
-    _addressController = TextEditingController(text: settings.address);
     _areaController = TextEditingController(text: settings.area);
     _centerNameController = TextEditingController(text: settings.centerName);
     _centerAddressController = TextEditingController(
@@ -67,9 +61,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _firstNameController.dispose();
     _middleNameController.dispose();
     _surnameController.dispose();
-    _dobController.dispose();
-    _phoneNumberController.dispose();
-    _addressController.dispose();
     _areaController.dispose();
     _centerNameController.dispose();
     _centerAddressController.dispose();
@@ -84,19 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _dobController.text = "${picked.toLocal()}".split(' ')[0];
-      });
-    }
-  }
+
 
   double _calculateCompletion(SettingsProvider settings) {
     final fields = [
@@ -107,9 +86,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       settings.email,
       settings.district,
       settings.position,
-      settings.dob,
-      settings.phoneNumber,
-      settings.address,
       settings.area,
       settings.centerName,
       settings.centerAddress,
@@ -217,9 +193,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _firstNameController.text,
         _middleNameController.text,
         _surnameController.text,
-        _dobController.text,
-        _phoneNumberController.text,
-        _addressController.text,
         _areaController.text,
         _centerNameController.text,
         _centerAddressController.text,
@@ -232,9 +205,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         firstName: _firstNameController.text.trim(),
         middleName: _middleNameController.text.trim(),
         surname: _surnameController.text.trim(),
-        dob: _dobController.text.trim(),
-        phoneNumber: _phoneNumberController.text.trim(),
-        address: _addressController.text.trim(),
         position: _positionController.text.trim(),
         district: _districtController.text.trim(),
         area: _areaController.text.trim(),
@@ -411,23 +381,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   keyboardType: TextInputType.emailAddress,
                   readOnly: true, // Email is locked as a unique identifier
                 ),
-                _buildInfoTile(
-                  context,
-                  controller: _phoneNumberController,
-                  icon: Icons.phone_outlined,
-                  label: 'Phone',
-                  value: settings.phoneNumber,
-                  keyboardType: TextInputType.phone,
-                  readOnly: true,
-                ),
-                _buildInfoTile(
-                  context,
-                  controller: _addressController,
-                  icon: Icons.map_outlined,
-                  label: 'Address',
-                  value: settings.address,
-                  maxLines: 2,
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -436,15 +389,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Personal Details',
               Icons.person_outline_rounded,
               [
-                _buildInfoTile(
-                  context,
-                  controller: _dobController,
-                  icon: Icons.cake_outlined,
-                  label: 'Birthday',
-                  value: settings.dob,
-                  readOnly: true,
-                  onTap: _isEditing ? () => _selectDate(context) : null,
-                ),
                 _buildInfoTile(
                   context,
                   controller: _firstNameController,
@@ -532,9 +476,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _firstNameController.text = settings.firstName;
       _middleNameController.text = settings.middleName;
       _surnameController.text = settings.surname;
-      _dobController.text = settings.dob;
-      _phoneNumberController.text = settings.phoneNumber;
-      _addressController.text = settings.address;
       _areaController.text = settings.area;
       _centerNameController.text = settings.centerName;
       _centerAddressController.text = settings.centerAddress;

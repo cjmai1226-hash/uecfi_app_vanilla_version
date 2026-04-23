@@ -23,6 +23,20 @@ class FirestoreService {
     });
   }
 
+  // 1b. Update Post
+  Future<void> updateCommunityPost({
+    required String postId,
+    required String newContent,
+    required String previousContent,
+  }) async {
+    await _firestore.collection('community_posts').doc(postId).update({
+      'content': newContent,
+      'previousContent': previousContent,
+      'editedAt': FieldValue.serverTimestamp(),
+      'isEdited': true,
+    });
+  }
+
   // 2. Submit Song
   Future<void> submitSongSuggestion({
     required String title,
@@ -73,9 +87,6 @@ class FirestoreService {
     required String firstName,
     required String middleName,
     required String surname,
-    required String dob,
-    required String phoneNumber,
-    required String address,
     required String position,
     required String district,
     required String area,
@@ -90,9 +101,6 @@ class FirestoreService {
       'firstName': firstName,
       'middleName': middleName,
       'surname': surname,
-      'dob': dob,
-      'phoneNumber': phoneNumber,
-      'address': address,
       'position': position,
       'district': district,
       'area': area,

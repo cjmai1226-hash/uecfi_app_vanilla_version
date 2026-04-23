@@ -145,6 +145,7 @@ class HomeScreen extends StatelessWidget {
                         final postNode = {
                           'id': postDoc.id,
                           'username': data['authorNickname'] ?? 'Unknown',
+                          'authorEmail': data['authorEmail'] ?? '',
                           'time': _formatTimestamp(data['timestamp']),
                           'content': data['content'] ?? '',
                           'likes': data['likes'] ?? 0,
@@ -479,10 +480,41 @@ class _PostCardState extends State<_PostCard> {
                             ],
                           ),
                         ),
+                        if (widget.post['authorEmail'] == context.read<SettingsProvider>().email)
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_rounded,
+                                  color: Colors.blueAccent,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Edit Post',
+                                  style: TextStyle(
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ).then((value) {
+                      if (!mounted) return;
                       if (value == 'report') {
                         _showReportDialog();
+                      } else if (value == 'edit') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreatePostScreen(
+                              postToEdit: widget.post,
+                            ),
+                          ),
+                        );
                       }
                     });
                   },

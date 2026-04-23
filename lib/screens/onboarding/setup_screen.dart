@@ -143,9 +143,6 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
           _firstNameController.text.trim(),
           settings.middleName,
           _surnameController.text.trim(),
-          settings.dob,
-          settings.phoneNumber,
-          settings.address,
           settings.area,
           _centerNameController.text.trim(),
           _centerAddressController.text.trim(),
@@ -183,7 +180,8 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false, // Prevent going back to Welcome screen
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Form(
           key: _formKey,
@@ -410,6 +408,7 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

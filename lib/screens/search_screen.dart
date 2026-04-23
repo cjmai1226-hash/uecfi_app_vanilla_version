@@ -160,52 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  TextSpan _buildHighlightedTextSpan({
-    required String text,
-    required String query,
-    required TextStyle normalStyle,
-    required TextStyle highlightStyle,
-  }) {
-    final terms = query
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((term) => term.isNotEmpty)
-        .toSet()
-        .toList();
-    if (terms.isEmpty || text.isEmpty) {
-      return TextSpan(text: text, style: normalStyle);
-    }
-    final escapedTerms = terms.map(RegExp.escape).join('|');
-    final matchRegex = RegExp('($escapedTerms)', caseSensitive: false);
-    final matches = matchRegex.allMatches(text).toList();
-    if (matches.isEmpty) return TextSpan(text: text, style: normalStyle);
 
-    final children = <TextSpan>[];
-    var currentIndex = 0;
-    for (final match in matches) {
-      if (match.start > currentIndex) {
-        children.add(
-          TextSpan(
-            text: text.substring(currentIndex, match.start),
-            style: normalStyle,
-          ),
-        );
-      }
-      children.add(
-        TextSpan(
-          text: text.substring(match.start, match.end),
-          style: highlightStyle,
-        ),
-      );
-      currentIndex = match.end;
-    }
-    if (currentIndex < text.length) {
-      children.add(
-        TextSpan(text: text.substring(currentIndex), style: normalStyle),
-      );
-    }
-    return TextSpan(children: children);
-  }
 
   Widget _buildEmptyState({
     required String title,
@@ -476,23 +431,15 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               child: Icon(icon, color: colorScheme.primary, size: 22),
             ),
-            title: RichText(
+            title: Text(
+              title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              text: _buildHighlightedTextSpan(
-                text: title,
-                query: _searchController.text,
-                normalStyle: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  letterSpacing: -0.5,
-                ),
-                highlightStyle: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                  backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                ),
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                letterSpacing: -0.5,
               ),
             ),
             subtitle: Text(

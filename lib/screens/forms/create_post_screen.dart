@@ -6,7 +6,9 @@ import '../../services/ad_service.dart';
 import '../menu/profile_screen.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final Map<String, dynamic>? postToEdit;
+
+  const CreatePostScreen({super.key, this.postToEdit});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -17,6 +19,21 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
 
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.postToEdit != null) {
+      final content = widget.postToEdit!['content'] as String;
+      final parts = content.split('\n\n');
+      if (parts.length >= 2) {
+        _titleController.text = parts[0];
+        _contentController.text = parts.sublist(1).join('\n\n');
+      } else {
+        _contentController.text = content;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -83,8 +100,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
     AdService().showRewardedAdDialog(
       context: context,
-      title: 'Publish Post',
-      content: 'Watch a short ad to publish your post?',
+      title: widget.postToEdit != null ? 'Update Post' : 'Publish Post',
+      content: widget.postToEdit != null
+          ? 'Watch a short ad to update your post?'
+          : 'Watch a short ad to publish your post?',
       onReward: () => _executePublish(),
     );
   }
@@ -98,17 +117,31 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       final settings = context.read<SettingsProvider>();
+      final combinedContent =
+          '${_titleController.text.trim()}\n\n${_contentController.text.trim()}';
 
-      await FirestoreService().submitCommunityPost(
-        content: '${_titleController.text}\n\n${_contentController.text}',
-        authorEmail: settings.email,
-        authorNickname: settings.nickname,
-      );
+      if (widget.postToEdit != null) {
+        await FirestoreService().updateCommunityPost(
+          postId: widget.postToEdit!['id'],
+          newContent: combinedContent,
+          previousContent: widget.postToEdit!['content'],
+        );
+      } else {
+        await FirestoreService().submitCommunityPost(
+          content: combinedContent,
+          authorEmail: settings.email,
+          authorNickname: settings.nickname,
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Post submitted successfully!'),
+          SnackBar(
+            content: Text(
+              widget.postToEdit != null
+                  ? 'Post updated successfully!'
+                  : 'Post submitted successfully!',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -171,7 +204,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Post'),
+        title: Text(widget.postToEdit != null ? 'Edit Post' : 'Create Post'),
         centerTitle: true,
         actions: [
           _isSubmitting
@@ -183,10 +216,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : IconButton.filled(
-                  tooltip: 'Publish',
-                  icon: const Icon(Icons.send_rounded, size: 18),
+              : FilledButton.icon(
                   onPressed: _submitPost,
+                  icon: Icon(
+                    widget.postToEdit != null
+                        ? Icons.check_rounded
+                        : Icons.send_rounded,
+                    size: 18,
+                  ),
+                  label: Text(widget.postToEdit != null ? 'Update' : 'Publish'),
                 ),
           const SizedBox(width: 8),
         ],
