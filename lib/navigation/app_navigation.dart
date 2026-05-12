@@ -51,15 +51,38 @@ class _AppNavigationState extends State<AppNavigation> {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        drawer: AppDrawer(
-          currentIndex: _currentIndex,
-          onSelectNavigation: (index) {
+        drawer: const AppDrawer(),
+        body: IndexedStack(index: _currentIndex, children: screens),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
             setState(() {
               _currentIndex = index;
             });
           },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.menu_book_outlined),
+              selectedIcon: Icon(Icons.menu_book_rounded),
+              label: 'Prayers',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.music_note_outlined),
+              selectedIcon: Icon(Icons.music_note_rounded),
+              label: 'Songs',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.location_on_outlined),
+              selectedIcon: Icon(Icons.location_on_rounded),
+              label: 'Centers',
+            ),
+          ],
         ),
-        body: IndexedStack(index: _currentIndex, children: screens),
       ),
     );
   }

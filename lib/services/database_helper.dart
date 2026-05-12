@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -9,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
+  static Completer<Database>? _initCompleter;
 
   factory DatabaseHelper() {
     return _instance;
@@ -18,8 +20,20 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+    
+    // If initialization is already in progress, wait for it
+    if (_initCompleter != null) return _initCompleter!.future;
+
+    _initCompleter = Completer<Database>();
+    try {
+      _database = await _initDatabase();
+      _initCompleter!.complete(_database);
+      return _database!;
+    } catch (e) {
+      _initCompleter!.completeError(e);
+      _initCompleter = null; // Reset so next call can try again
+      rethrow;
+    }
   }
 
   Future<Database> _initDatabase() async {
@@ -29,28 +43,19 @@ class DatabaseHelper {
     final prefs = await SharedPreferences.getInstance();
     final packageInfo = await PackageInfo.fromPlatform();
     
-    // Get the build number (e.g., "27") as an integer for comparison
-    final int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+    // Clean build number: remove any non-digits (e.g. "32-beta" -> "32")
+    final String cleanBuildNumberStr = packageInfo.buildNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final int currentBuildNumber = int.tryParse(cleanBuildNumberStr) ?? 0;
     final int lastCopiedBuildNumber = prefs.getInt('lastCopiedDbBuildNumber') ?? 0;
 
     // Check if the database exists
     final exists = await databaseExists(path);
 
     // If DB is missing OR the app has been updated to a new build number
-    if (!exists || lastCopiedBuildNumber < currentBuildNumber) {
-      debugPrint('Database update detected (Build $lastCopiedBuildNumber -> $currentBuildNumber). Syncing assets...');
+    if (!exists || (currentBuildNumber > 0 && lastCopiedBuildNumber < currentBuildNumber)) {
+      debugPrint('Database initialization/update detected (Build $lastCopiedBuildNumber -> $currentBuildNumber).');
       
-      // Make sure the parent directory exists
-      try {
-        await Directory(dirname(path)).create(recursive: true);
-      } catch (_) {}
-
-      // If an old DB already exists and we are upgrading, delete it first
-      if (exists) {
-        await deleteDatabase(path);
-      }
-
-      // Copy from assets
+      // Load from assets FIRST before deleting anything
       try {
         ByteData data = await rootBundle.load('assets/db/uecfi.db');
         List<int> bytes = data.buffer.asUint8List(
@@ -58,19 +63,33 @@ class DatabaseHelper {
           data.lengthInBytes,
         );
 
+        // Make sure the parent directory exists
+        await Directory(dirname(path)).create(recursive: true);
+
+        // If an old DB already exists, delete it safely before writing the new one
+        if (exists) {
+          debugPrint('Deleting old database to apply update...');
+          await deleteDatabase(path);
+        }
+
         // Write and flush the bytes written
         await File(path).writeAsBytes(bytes, flush: true);
 
-        // Save the current build number to prevent re-copying until the next Play Store update
+        // Save the current build number to prevent re-copying until the next update
         await prefs.setInt('lastCopiedDbBuildNumber', currentBuildNumber);
         debugPrint('Database synced successfully for Build $currentBuildNumber');
       } catch (e) {
-        debugPrint('Error copying database from assets: $e');
-        // If copy fails and DB doesn't exist, this will cause issues, but we log it.
+        debugPrint('CRITICAL: Error copying database from assets: $e');
+        // If the database doesn't exist and the copy failed, we have a problem.
+        // But we don't delete the old one if it exists until we have the bytes.
+        if (!exists) {
+          rethrow; // Re-throw if we can't even initialize the first time
+        }
       }
     }
 
     // Open the database
+    debugPrint('Opening database at $path');
     return await openDatabase(path);
   }
 
@@ -163,11 +182,17 @@ class DatabaseHelper {
       'centerlocation',
       'centerdistrict',
     ]);
+    final bylaws = await searchTable('bylaws', 'Bylaw', query, [
+      'chapters',
+      'title',
+      'content',
+    ]);
 
     final List<Map<String, dynamic>> allResults = [];
     allResults.addAll(prayers);
     allResults.addAll(songs);
     allResults.addAll(centers);
+    allResults.addAll(bylaws);
 
     return allResults;
   }

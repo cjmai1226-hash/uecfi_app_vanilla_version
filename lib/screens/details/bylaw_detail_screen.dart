@@ -1,142 +1,106 @@
 import 'package:flutter/material.dart';
-import '../../services/ad_service.dart';
-import 'package:provider/provider.dart';
-import '../../providers/settings_provider.dart';
+import '../../widgets/main_app_bar.dart';
 
 class BylawDetailScreen extends StatelessWidget {
   final Map<String, dynamic> bylaw;
 
   const BylawDetailScreen({super.key, required this.bylaw});
 
-  List<TextSpan> _buildParsedSpans(
-    String text,
-    Color textColor,
-    double fontSize,
-  ) {
-    final pattern = RegExp(r'(Article\s+[A-Za-z0-9]+)', caseSensitive: false);
-    final List<TextSpan> spans = [];
-
-    text.splitMapJoin(
-      pattern,
-      onMatch: (Match m) {
-        spans.add(
-          TextSpan(
-            text: m.group(0),
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              color: textColor,
-              fontSize: fontSize * 1.1,
-              letterSpacing: 0.5,
-            ),
-          ),
-        );
-        return '';
-      },
-      onNonMatch: (String n) {
-        spans.add(
-          TextSpan(
-            text: n,
-            style: TextStyle(
-              color: textColor,
-              fontSize: fontSize,
-              height: 1.6,
-            ),
-          ),
-        );
-        return '';
-      },
-    );
-
-    return spans;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
     final colorScheme = Theme.of(context).colorScheme;
-    final textColor = colorScheme.onSurface;
-
-    final title = bylaw['title'] ?? 'Untitled';
-    final content = bylaw['content'] ?? 'No content available';
-    final chapter = bylaw['chapters'] ?? '';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Policies & By-Laws'),
-        centerTitle: true,
-      ),
+      appBar: const MainAppBar(title: 'Bylaw Detail', showBackButton: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Chapter Tag
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Chapter $chapter'.toUpperCase(),
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.gavel_rounded, color: colorScheme.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Chapter ${bylaw['chapters'] ?? ''}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.primary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        Text(
+                          bylaw['title'] ?? 'Untitled',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    '2019 BY-LAWS',
-                    style: TextStyle(
-                      color: colorScheme.onSecondaryContainer,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Title
-            Text(
-              title.toString(),
-              style: TextStyle(
-                fontSize: settings.fontSize * 1.8,
-                fontWeight: FontWeight.w900,
-                color: textColor,
-                letterSpacing: -0.8,
-                height: 1.1,
+                ],
               ),
             ),
             const SizedBox(height: 32),
-            // Content
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(height: 1.6),
-                children: _buildParsedSpans(
-                  content.toString(),
-                  textColor,
-                  settings.fontSize * 1.1,
+            _buildContent(bylaw['content'] ?? 'No content available.', colorScheme),
+            const SizedBox(height: 64),
+            Center(
+              child: Text(
+                '2019 By-Laws',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
-            const SizedBox(height: 48),
-            const AdBannerWidget(),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent(String content, ColorScheme colorScheme) {
+    final List<TextSpan> spans = [];
+    final RegExp regExp = RegExp(r'(Article\s+\d+)', caseSensitive: false);
+
+    int start = 0;
+    for (final Match match in regExp.allMatches(content)) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: content.substring(start, match.start)));
+      }
+      spans.add(TextSpan(
+        text: match.group(0),
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ));
+      start = match.end;
+    }
+    if (start < content.length) {
+      spans.add(TextSpan(text: content.substring(start)));
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      style: TextStyle(
+        fontSize: 16,
+        height: 1.6,
+        letterSpacing: 0.2,
+        color: colorScheme.onSurface,
       ),
     );
   }

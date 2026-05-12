@@ -8,6 +8,7 @@ import '../services/database_helper.dart';
 import 'details/prayer_detail_screen.dart';
 import 'details/song_detail_screen.dart';
 import 'details/center_detail_screen.dart';
+import 'details/bylaw_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({
@@ -28,7 +29,7 @@ class _SearchScreenState extends State<SearchScreen> {
   static const int _maxRecentSearches = 10;
 
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Prayers', 'Songs', 'Centers'];
+  final List<String> _filters = ['All', 'Prayers', 'Songs', 'Centers', 'Bylaws'];
   final List<String> _recentSearches = [];
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -151,7 +152,19 @@ class _SearchScreenState extends State<SearchScreen> {
         'centerdistrict',
         'centerlocation',
       ]);
+    } else if (_selectedFilter == 'Bylaws') {
+      results = await dbHelper.searchTable('bylaws', 'Bylaw', query, [
+        'chapters',
+        'title',
+        'content',
+      ]);
     }
+
+    results.sort((a, b) {
+      final titleA = (a['title'] ?? a['centername'] ?? a['chapters'] ?? '').toString().toLowerCase();
+      final titleB = (b['title'] ?? b['centername'] ?? b['chapters'] ?? '').toString().toLowerCase();
+      return titleA.compareTo(titleB);
+    });
 
     setState(() {
       _searchResults = results;
@@ -412,6 +425,10 @@ class _SearchScreenState extends State<SearchScreen> {
           subtitle =
               '${item['centerdistrict'] ?? ''} • ${item['centeraddress'] ?? ''}';
           icon = Icons.church_rounded;
+        } else if (type == 'Bylaw') {
+          title = 'Chapter ${item['chapters'] ?? ''}: ${item['title'] ?? ''}';
+          subtitle = item['content'] ?? '';
+          icon = Icons.gavel_rounded;
         }
 
         return Material(
@@ -470,6 +487,13 @@ class _SearchScreenState extends State<SearchScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => SongDetailScreen(song: item),
+                  ),
+                );
+              } else if (type == 'Bylaw') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BylawDetailScreen(bylaw: item),
                   ),
                 );
               } else if (type == 'Center') {

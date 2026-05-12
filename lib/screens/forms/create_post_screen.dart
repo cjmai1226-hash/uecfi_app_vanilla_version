@@ -15,7 +15,6 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
 
   bool _isSubmitting = false;
@@ -24,20 +23,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   void initState() {
     super.initState();
     if (widget.postToEdit != null) {
-      final content = widget.postToEdit!['content'] as String;
-      final parts = content.split('\n\n');
-      if (parts.length >= 2) {
-        _titleController.text = parts[0];
-        _contentController.text = parts.sublist(1).join('\n\n');
-      } else {
-        _contentController.text = content;
-      }
+      _contentController.text = widget.postToEdit!['content'] ?? '';
     }
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
@@ -88,10 +79,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
-    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+    if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please fill out all fields'),
+          content: const Text('Please enter some content for your post'),
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -109,7 +100,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _executePublish() async {
-    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+    if (_contentController.text.trim().isEmpty) {
       return;
     }
 
@@ -117,8 +108,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       final settings = context.read<SettingsProvider>();
-      final combinedContent =
-          '${_titleController.text.trim()}\n\n${_contentController.text.trim()}';
+      final combinedContent = _contentController.text.trim();
 
       if (widget.postToEdit != null) {
         await FirestoreService().updateCommunityPost(
@@ -303,17 +293,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
 
                 _buildModernField(
-                  _titleController,
-                  'Post Title',
-                  Icons.title_rounded,
-                  colorScheme,
-                ),
-                _buildModernField(
                   _contentController,
-                  'What do you want to share?',
+                  'What do you want to share with the community?',
                   Icons.edit_note_rounded,
                   colorScheme,
-                  maxLines: 8,
+                  maxLines: 12,
                 ),
                 const SizedBox(height: 8),
                 Container(

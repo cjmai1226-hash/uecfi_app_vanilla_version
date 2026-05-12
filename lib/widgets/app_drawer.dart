@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:in_app_review/in_app_review.dart';
+import '../providers/settings_provider.dart';
+import '../utils/color_utils.dart';
+import '../screens/menu/profile_screen.dart';
 import '../screens/menu/settings_screen.dart';
 import '../screens/menu/bookmarks_screen.dart';
 import '../screens/forms/submit_song_screen.dart';
 import '../screens/menu/help_feedback_screen.dart';
+import '../screens/menu/bylaws_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
-    required this.currentIndex,
-    required this.onSelectNavigation,
   });
-
-  final int currentIndex;
-  final ValueChanged<int> onSelectNavigation;
 
   Future<void> _handleRateApp(BuildContext context) async {
     final InAppReview inAppReview = InAppReview.instance;
@@ -51,11 +51,13 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final settings = context.watch<SettingsProvider>();
 
     return Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
-      width: MediaQuery.of(context).size.width * 0.60,
+      width: MediaQuery.of(context).size.width * 0.80,
       child: SafeArea(
         child: Column(
           children: [
@@ -69,57 +71,8 @@ class AppDrawer extends StatelessWidget {
                 bottom: 8,
               ),
               children: [
-                _buildSectionLabel(context, 'MENU'),
-                _DrawerTile(
-                  icon: currentIndex == 0
-                      ? Icons.home_rounded
-                      : Icons.home_outlined,
-                  label: 'Home',
-                  isSelected: currentIndex == 0,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onSelectNavigation(0);
-                  },
-                ),
-                _DrawerTile(
-                  icon: currentIndex == 1
-                      ? Icons.menu_book_rounded
-                      : Icons.menu_book_outlined,
-                  label: 'Prayers',
-                  isSelected: currentIndex == 1,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onSelectNavigation(1);
-                  },
-                ),
-                _DrawerTile(
-                  icon: currentIndex == 2
-                      ? Icons.music_note_rounded
-                      : Icons.music_note_outlined,
-                  label: 'Songs',
-                  isSelected: currentIndex == 2,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onSelectNavigation(2);
-                  },
-                ),
-                _DrawerTile(
-                  icon: currentIndex == 3
-                      ? Icons.location_on_rounded
-                      : Icons.location_on_outlined,
-                  label: 'Centers',
-                  isSelected: currentIndex == 3,
-                  onTap: () {
-                    Navigator.pop(context);
-                    onSelectNavigation(3);
-                  },
-                ),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Divider(),
-                ),
-
+                _buildProfileHeader(context, settings, colorScheme),
+                const SizedBox(height: 8),
                 _buildSectionLabel(context, 'TOOLS & CONTENT'),
                 _DrawerTile(
                   icon: Icons.bookmarks_outlined,
@@ -130,6 +83,19 @@ class AppDrawer extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const BookmarksScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _DrawerTile(
+                  icon: Icons.gavel_rounded,
+                  label: 'Church Bylaws',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BylawsScreen(),
                       ),
                     );
                   },
@@ -186,6 +152,81 @@ class AppDrawer extends StatelessWidget {
     ),
   );
 }
+
+  Widget _buildProfileHeader(
+    BuildContext context,
+    SettingsProvider settings,
+    ColorScheme colorScheme,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: ColorUtils.getAvatarColor(settings.nickname),
+              child: Text(
+                settings.nickname.isNotEmpty
+                    ? settings.nickname[0].toUpperCase()
+                    : 'U',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    settings.nickname,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    settings.email,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            IconButton.filledTonal(
+              onPressed: () {},
+              icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildSectionLabel(BuildContext context, String label) {
     return Padding(
@@ -244,13 +285,11 @@ class AppDrawer extends StatelessWidget {
 class _DrawerTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool isSelected;
   final VoidCallback onTap;
 
   const _DrawerTile({
     required this.icon,
     required this.label,
-    this.isSelected = false,
     required this.onTap,
   });
 
@@ -259,7 +298,7 @@ class _DrawerTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Material(
-      color: isSelected ? colorScheme.secondaryContainer : Colors.transparent,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(28),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -271,19 +310,15 @@ class _DrawerTile extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected
-                    ? colorScheme.onSecondaryContainer
-                    : colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: isSelected
-                        ? colorScheme.onSecondaryContainer
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
                 ),

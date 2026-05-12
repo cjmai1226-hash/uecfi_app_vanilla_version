@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/ad_service.dart';
 import '../../providers/settings_provider.dart';
-import '../../utils/color_utils.dart';
 import '../../widgets/main_app_bar.dart';
-import 'profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -147,8 +145,6 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Column(
                 children: [
-                  _buildProfileHeader(context, settings, colorScheme),
-                  const SizedBox(height: 24),
                   _buildSectionHeader('Appearance', colorScheme),
                   _buildSettingsCard(
                     context,
@@ -317,74 +313,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(
-    BuildContext context,
-    SettingsProvider settings,
-    ColorScheme colorScheme,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: ColorUtils.getAvatarColor(settings.nickname),
-              child: Text(
-                settings.nickname.isNotEmpty
-                    ? settings.nickname[0].toUpperCase()
-                    : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    settings.nickname,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  Text(
-                    settings.email,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton.filledTonal(
-              onPressed: () {}, // This could link to profile edit if needed
-              icon: const Icon(Icons.qr_code_2_rounded),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSystemInfo(ColorScheme colorScheme) {
     return Column(
       children: [
@@ -401,7 +329,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Version 1.0.1 • Build 28',
+          'Version 2.0.0 • Build 30',
           style: TextStyle(
             color: colorScheme.onSurfaceVariant,
             fontSize: 12,
