@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/database_helper.dart';
 import '../../widgets/main_app_bar.dart';
 import '../details/bylaw_detail_screen.dart';
+import '../../services/ad_service.dart';
 
 class BylawsScreen extends StatefulWidget {
   const BylawsScreen({super.key});
@@ -103,16 +104,8 @@ class _BylawsScreenState extends State<BylawsScreen> {
                               clipBehavior: Clip.antiAlias,
                               child: ListTile(
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Icon(Icons.gavel_rounded, color: colorScheme.primary, size: 24),
-                                ),
                                 title: Text(
-                                  'Chapter ${bylaw['chapters']}: ${bylaw['title']}',
+                                  bylaw['title'] ?? 'Untitled',
                                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.5),
                                 ),
                                 subtitle: Text(
@@ -121,7 +114,32 @@ class _BylawsScreenState extends State<BylawsScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w500),
                                 ),
-                                trailing: Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 14),
+                                trailing: (bylaw['chapters'] != null &&
+                                        bylaw['chapters'].toString().trim().isNotEmpty)
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.primaryContainer.withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: colorScheme.primary.withValues(alpha: 0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'CH. ${bylaw['chapters']}',
+                                          style: TextStyle(
+                                            color: colorScheme.onPrimaryContainer,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -135,6 +153,9 @@ class _BylawsScreenState extends State<BylawsScreen> {
                       ),
           ),
         ],
+      ),
+      bottomNavigationBar: const SafeArea(
+        child: AdBannerWidget(),
       ),
     );
   }

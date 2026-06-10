@@ -369,7 +369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildCardSection(
               context,
               'Contact Information',
-              Icons.contact_mail_outlined,
               [
                 _buildInfoTile(
                   context,
@@ -387,7 +386,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildCardSection(
               context,
               'Personal Details',
-              Icons.person_outline_rounded,
               [
                 _buildInfoTile(
                   context,
@@ -416,7 +414,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildCardSection(
               context,
               'Church Information',
-              Icons.church_outlined,
               [
                 _buildInfoTile(
                   context,
@@ -681,41 +678,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildCardSection(
     BuildContext context,
     String title,
-    IconData sectionIcon,
     List<Widget> tiles,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    List<Widget> children = [];
+    for (int i = 0; i < tiles.length; i++) {
+      children.add(tiles[i]);
+      if (i < tiles.length - 1) {
+        children.add(
+          Divider(
+            height: 1,
+            indent: 68,
+            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+          ),
+        );
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-          child: Row(
-            children: [
-              Icon(sectionIcon, size: 20, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                title.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.primary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.primary,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(32),
-            side: BorderSide(color: colorScheme.outlineVariant, width: 1),
-          ),
+        Material(
           color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(28),
           clipBehavior: Clip.antiAlias,
-          child: Column(children: tiles),
+          child: Column(children: children),
         ),
       ],
     );
@@ -761,32 +761,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return ListTile(
       onTap: onTap,
-      leading: Icon(
-        icon,
-        color: isPlaceholder
-            ? colorScheme.primary.withValues(alpha: 0.3)
-            : colorScheme.primary,
-        size: 20,
-      ),
-      title: Text(
-        displayValue,
-        style: TextStyle(
-          fontSize: 16,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isPlaceholder
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.primaryContainer.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
           color: isPlaceholder
               ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-              : colorScheme.onSurface,
-          fontWeight: isPlaceholder ? FontWeight.w400 : FontWeight.w700,
+              : colorScheme.primary,
+          size: 22,
         ),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        label,
+        displayValue,
         style: TextStyle(
-          fontSize: 12,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-          fontWeight: FontWeight.w500,
+          fontSize: 13,
+          color: isPlaceholder
+              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
+              : colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w400,
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
     );
   }
 }

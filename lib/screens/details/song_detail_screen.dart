@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/ad_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -103,8 +102,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     Color textColor,
     Color primaryColor,
     double fontSize,
-    SettingsProvider settings,
-  ) {
+    SettingsProvider settings, {
+    bool useMonoFont = false,
+  }) {
     final showChords = settings.showChords;
     final showChordShapes = settings.showChordShapes;
     final instrument = settings.chordInstrument;
@@ -137,7 +137,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           spans.add(
             TextSpan(
               text: prefix,
-              style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: fontSize),
+              style: useMonoFont
+                  ? GoogleFonts.robotoMono(color: textColor.withValues(alpha: 0.5), fontSize: fontSize)
+                  : TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: fontSize),
             ),
           );
         }
@@ -153,11 +155,17 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                   .join(' ');
             }
 
-            final chordStyle = TextStyle(
-              fontWeight: FontWeight.w900,
-              color: primaryColor,
-              fontSize: fontSize,
-            );
+            final chordStyle = useMonoFont
+                ? GoogleFonts.robotoMono(
+                    fontWeight: FontWeight.w900,
+                    color: primaryColor,
+                    fontSize: fontSize,
+                  )
+                : TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: primaryColor,
+                    fontSize: fontSize,
+                  );
 
             if (_isChordsView && showChords && showChordShapes && !_isProjectMode) {
               spans.add(
@@ -179,7 +187,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             spans.add(
               TextSpan(
                 text: n,
-                style: TextStyle(color: textColor, fontSize: fontSize),
+                style: useMonoFont
+                    ? GoogleFonts.robotoMono(color: textColor, fontSize: fontSize)
+                    : TextStyle(color: textColor, fontSize: fontSize),
               ),
             );
             return '';
@@ -192,12 +202,19 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             spans.add(
               TextSpan(
                 text: m.group(0),
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: textColor.withValues(alpha: 0.8),
-                  fontSize: fontSize,
-                  letterSpacing: 0.5,
-                ),
+                style: useMonoFont
+                    ? GoogleFonts.robotoMono(
+                        fontWeight: FontWeight.w800,
+                        color: textColor.withValues(alpha: 0.8),
+                        fontSize: fontSize,
+                        letterSpacing: 0.5,
+                      )
+                    : TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: textColor.withValues(alpha: 0.8),
+                        fontSize: fontSize,
+                        letterSpacing: 0.5,
+                      ),
               ),
             );
             return '';
@@ -206,7 +223,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             spans.add(
               TextSpan(
                 text: n,
-                style: TextStyle(color: textColor, fontSize: fontSize, height: 1.5),
+                style: useMonoFont
+                    ? GoogleFonts.robotoMono(color: textColor, fontSize: fontSize, height: 1.5)
+                    : TextStyle(color: textColor, fontSize: fontSize, height: 1.5),
               ),
             );
             return '';
@@ -232,6 +251,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
         widget.song['lyrics'] ??
         'No lyrics available';
     final chordsContent = widget.song['chords'] ?? 'No chords available';
+    final hasChords = widget.song['chords'] != null &&
+        widget.song['chords'].toString().trim().isNotEmpty &&
+        widget.song['chords'].toString() != 'No chords available';
     final category = widget.song['category'] ?? 'Uncategorized';
     final author = widget.song['author'] ?? 'N/A';
 
@@ -251,39 +273,8 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               title: 'Song Detail',
               showBackButton: true,
               actions: [
-                IconButton(
-                  tooltip: isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
-                  icon: Icon(
-                    isBookmarked
-                        ? Icons.bookmark_rounded
-                        : Icons.bookmark_add_outlined,
-                    color: isBookmarked ? primaryColor : null,
-                  ),
-                  onPressed: () {
-                    context.read<BookmarkProvider>().toggleBookmark(
-                          title.toString(),
-                        );
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isBookmarked
-                              ? 'Removed Bookmark'
-                              : 'Added to Bookmarks',
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Song Details',
-                  icon: const Icon(Icons.info_outline_rounded),
-                  onPressed: () => _showSongInfoDialog(category, author),
-                ),
+                if (settings.showChords && hasChords && _isChordsView)
+                  _buildCompactTransposeControl(colorScheme),
               ],
             ),
       body: SafeArea(
@@ -344,10 +335,6 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     height: 1.1,
                   ),
                 ),
-                if (_isChordsView && settings.showChords) ...[
-                  const SizedBox(height: 24),
-                  _buildTransposeControl(colorScheme),
-                ],
                 const SizedBox(height: 32),
               ],
               // Content Container
@@ -370,12 +357,11 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                           ? settings.fontSize * 2.8
                           : settings.fontSize * 1.05,
                       settings,
+                      useMonoFont: _isChordsView && settings.showChords,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
-              const AdBannerWidget(),
               const SizedBox(height: 32),
             ],
           ),
@@ -390,37 +376,65 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               child: Row(
                 children: [
                   if (settings.showChords) ...[
-                    Expanded(
-                      child: SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(
-                            value: false,
-                            label: Text('Lyrics'),
-                            icon: Icon(Icons.notes_rounded),
-                          ),
-                          ButtonSegment(
-                            value: true,
-                            label: Text('Chords'),
-                            icon: Icon(Icons.music_note_rounded),
-                          ),
-                        ],
-                        selected: {_isChordsView},
-                        onSelectionChanged: (Set<bool> newSelection) {
-                          setState(() {
-                            _isChordsView = newSelection.first;
-                            if (!_isChordsView) _transposeOffset = 0;
-                          });
-                        },
-                        showSelectedIcon: false,
-                        style: SegmentedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          selectedBackgroundColor: primaryColor,
-                          selectedForegroundColor: colorScheme.onPrimary,
-                        ),
+                    FilledButton.icon(
+                      onPressed: hasChords
+                          ? () {
+                              setState(() {
+                                _isChordsView = !_isChordsView;
+                                if (!_isChordsView) _transposeOffset = 0;
+                              });
+                            }
+                          : null,
+                      icon: Icon(
+                        _isChordsView
+                            ? Icons.notes_rounded
+                            : Icons.music_note_rounded,
                       ),
+                      label: Text(_isChordsView ? 'Lyrics' : 'Chords'),
+                      style: hasChords
+                          ? FilledButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: colorScheme.onPrimary,
+                            )
+                          : null,
                     ),
-                    const SizedBox(width: 16),
                   ],
+                  const Spacer(),
+                  IconButton.filledTonal(
+                    tooltip: isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
+                    icon: Icon(
+                      isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_add_outlined,
+                      color: isBookmarked ? primaryColor : null,
+                    ),
+                    onPressed: () {
+                      context.read<BookmarkProvider>().toggleBookmark(
+                            title.toString(),
+                          );
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isBookmarked
+                                ? 'Removed Bookmark'
+                                : 'Added to Bookmarks',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    tooltip: 'Song Details',
+                    icon: const Icon(Icons.info_outline_rounded),
+                    onPressed: () => _showSongInfoDialog(category, author),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton.filledTonal(
                     tooltip: 'Projector Mode',
                     icon: const Icon(Icons.cast_rounded),
@@ -442,49 +456,30 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     );
   }
 
-  Widget _buildTransposeControl(ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(width: 12),
-          Text(
-            'Transpose',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurfaceVariant,
-              letterSpacing: 0.5,
+  Widget _buildCompactTransposeControl(ColorScheme colorScheme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton.filledTonal(
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.remove_rounded, size: 16),
+          onPressed: _transposeOffset > -6 ? () => setState(() => _transposeOffset--) : null,
+        ),
+        SizedBox(
+          width: 32,
+          child: Center(
+            child: Text(
+              _transposeOffset > 0 ? '+$_transposeOffset' : '$_transposeOffset',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
             ),
           ),
-          const SizedBox(width: 24),
-          IconButton.filledTonal(
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.remove_rounded),
-            onPressed: _transposeOffset > -6 ? () => setState(() => _transposeOffset--) : null,
-          ),
-          SizedBox(
-            width: 48,
-            child: Center(
-              child: Text(
-                _transposeOffset > 0 ? '+$_transposeOffset' : '$_transposeOffset',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-              ),
-            ),
-          ),
-          IconButton.filledTonal(
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.add_rounded),
-            onPressed: _transposeOffset < 6 ? () => setState(() => _transposeOffset++) : null,
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
+        ),
+        IconButton.filledTonal(
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.add_rounded, size: 16),
+          onPressed: _transposeOffset < 6 ? () => setState(() => _transposeOffset++) : null,
+        ),
+      ],
     );
   }
 

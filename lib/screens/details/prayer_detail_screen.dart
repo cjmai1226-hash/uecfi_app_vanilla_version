@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../services/ad_service.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/main_app_bar.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prayer;
+  final List<Map<String, dynamic>>? allPrayers;
+  final int? initialIndex;
 
-  const PrayerDetailScreen({super.key, required this.prayer});
+  const PrayerDetailScreen({
+    super.key,
+    required this.prayer,
+    this.allPrayers,
+    this.initialIndex,
+  });
 
   @override
   State<PrayerDetailScreen> createState() => _PrayerDetailScreenState();
@@ -15,6 +21,38 @@ class PrayerDetailScreen extends StatefulWidget {
 
 class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   bool _isProjectMode = false;
+  late int _currentIndex;
+  late Map<String, dynamic> _currentPrayer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex ?? 0;
+    _currentPrayer = widget.prayer;
+  }
+
+  bool get _hasList =>
+      widget.allPrayers != null && widget.allPrayers!.isNotEmpty;
+
+  bool get _hasPrevious => _hasList && _currentIndex > 0;
+  bool get _hasNext =>
+      _hasList && _currentIndex < widget.allPrayers!.length - 1;
+
+  void _goToPrevious() {
+    if (!_hasPrevious) return;
+    setState(() {
+      _currentIndex--;
+      _currentPrayer = widget.allPrayers![_currentIndex];
+    });
+  }
+
+  void _goToNext() {
+    if (!_hasNext) return;
+    setState(() {
+      _currentIndex++;
+      _currentPrayer = widget.allPrayers![_currentIndex];
+    });
+  }
 
   List<TextSpan> _buildParsedSpans(
     String text,
@@ -43,11 +81,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         spans.add(
           TextSpan(
             text: n,
-            style: TextStyle(
-              color: textColor,
-              fontSize: fontSize,
-              height: 1.6,
-            ),
+            style: TextStyle(color: textColor, fontSize: fontSize, height: 1.6),
           ),
         );
         return '';
@@ -63,14 +97,14 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     final isTagalog = settings.prayerLanguage == 'Tagalog';
 
     // Ilocano variables
-    final ilocanoTitle = widget.prayer['title'] ?? 'Untitled';
-    final ilocanoContent = widget.prayer['content'] ?? 'No content available';
+    final ilocanoTitle = _currentPrayer['title'] ?? 'Untitled';
+    final ilocanoContent = _currentPrayer['content'] ?? 'No content available';
 
     // Tagalog variables
-    final tagalogTitle = widget.prayer['title1'] ?? ilocanoTitle;
-    final tagalogContent = widget.prayer['content1'] ?? ilocanoContent;
+    final tagalogTitle = _currentPrayer['title1'] ?? ilocanoTitle;
+    final tagalogContent = _currentPrayer['content1'] ?? ilocanoContent;
 
-    final category = widget.prayer['category'] ?? 'Uncategorized';
+    final category = _currentPrayer['category'] ?? 'Uncategorized';
 
     // Resolving based on global state
     final currentTitle = isTagalog ? tagalogTitle : ilocanoTitle;
@@ -78,6 +112,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
     final colorScheme = Theme.of(context).colorScheme;
     final textColor = colorScheme.onSurface;
+    final primaryColor = colorScheme.primary;
 
     return Scaffold(
       appBar: _isProjectMode
@@ -106,7 +141,10 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
               if (!_isProjectMode) ...[
                 // Category Tag
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(32),
@@ -137,9 +175,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
               ],
               // Content Container
               RichText(
-                textAlign: _isProjectMode
-                    ? TextAlign.center
-                    : TextAlign.start,
+                textAlign: _isProjectMode ? TextAlign.center : TextAlign.start,
                 text: TextSpan(
                   style: const TextStyle(height: 1.6),
                   children: _buildParsedSpans(
@@ -151,19 +187,62 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
-              const AdBannerWidget(),
               const SizedBox(height: 32),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: _isProjectMode || !_hasList
+          ? null
+          : BottomAppBar(
+              elevation: 4,
+              shadowColor: Colors.black.withValues(alpha: 0.2),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Previous Button
+                  FilledButton.tonalIcon(
+                    onPressed: _hasPrevious ? _goToPrevious : null,
+                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    label: const Text('Previous'),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Counter
+                  Text(
+                    '${_currentIndex + 1} / ${widget.allPrayers!.length}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Next Button
+                  FilledButton.icon(
+                    onPressed: _hasNext ? _goToNext : null,
+                    label: const Text('Next'),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    iconAlignment: IconAlignment.end,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: colorScheme.onPrimary,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+            ),
       floatingActionButton: _isProjectMode
           ? FloatingActionButton.large(
               heroTag: 'prayer_project_exit',
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
               onPressed: () => setState(() => _isProjectMode = false),
               child: const Icon(Icons.close_rounded),
             )

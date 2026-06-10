@@ -36,6 +36,25 @@ class DatabaseHelper {
     }
   }
 
+  Future<bool> _isDatabaseEmptyOrInvalid(String path) async {
+    try {
+      final db = await openDatabase(path);
+      final List<Map<String, dynamic>> tables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='Songs';",
+      );
+      if (tables.isEmpty) {
+        await db.close();
+        return true;
+      }
+      final countResult = await db.rawQuery("SELECT COUNT(*) as count FROM Songs;");
+      final count = Sqflite.firstIntValue(countResult) ?? 0;
+      await db.close();
+      return count == 0;
+    } catch (_) {
+      return true;
+    }
+  }
+
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'uecfi.db');
@@ -51,9 +70,21 @@ class DatabaseHelper {
     // Check if the database exists
     final exists = await databaseExists(path);
 
-    // If DB is missing OR the app has been updated to a new build number
-    if (!exists || (currentBuildNumber > 0 && lastCopiedBuildNumber < currentBuildNumber)) {
-      debugPrint('Database initialization/update detected (Build $lastCopiedBuildNumber -> $currentBuildNumber).');
+    bool shouldCopy = !exists || (currentBuildNumber > 0 && lastCopiedBuildNumber < currentBuildNumber);
+
+    if (!shouldCopy && exists) {
+      // If database is empty or invalid on disk, we must re-copy it.
+      shouldCopy = await _isDatabaseEmptyOrInvalid(path);
+    }
+
+    if (kDebugMode) {
+      // In debug mode, we always copy to make sure development database assets are updated seamlessly.
+      shouldCopy = true;
+    }
+
+    // If DB is missing OR the app has been updated to a new build number OR empty/invalid OR in debug mode
+    if (shouldCopy) {
+      debugPrint('Database initialization/update detected (exists: $exists, Build: $lastCopiedBuildNumber -> $currentBuildNumber, debug: $kDebugMode).');
       
       // Load from assets FIRST before deleting anything
       try {

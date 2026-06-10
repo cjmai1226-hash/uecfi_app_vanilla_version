@@ -79,11 +79,9 @@ class MainApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'UECFI App',
-      theme: AppTheme.themeData(
-        isDarkMode: settings.isDarkMode,
-        seedColor: settings.colorSeed,
-        fontStyle: settings.fontStyle,
-      ),
+      theme: AppTheme.themeData(isDarkMode: false, seedColor: settings.colorSeed),
+      darkTheme: AppTheme.themeData(isDarkMode: true, seedColor: settings.colorSeed),
+      themeMode: settings.flutterThemeMode,
       home: settings.isProfileSetup && settings.hasAcceptedTerms
           ? const AppNavigation()
           : const WelcomeScreen(),

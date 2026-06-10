@@ -4,16 +4,32 @@ import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../menu/profile_screen.dart';
 
-class UpdateCenterScreen extends StatefulWidget {
+class UpdateCenterSheet extends StatefulWidget {
   final Map<String, dynamic> centerNode;
 
-  const UpdateCenterScreen({super.key, required this.centerNode});
+  const UpdateCenterSheet({super.key, required this.centerNode});
+
+  /// Opens the Suggest Edit bottom sheet.
+  static Future<void> show(
+    BuildContext context,
+    Map<String, dynamic> centerNode,
+  ) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => UpdateCenterSheet(centerNode: centerNode),
+    );
+  }
 
   @override
-  State<UpdateCenterScreen> createState() => _UpdateCenterScreenState();
+  State<UpdateCenterSheet> createState() => _UpdateCenterSheetState();
 }
 
-class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
+class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
   String _selectedType = 'Location Locator';
   bool _isSubmitting = false;
 
@@ -257,41 +273,67 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Suggest Update'),
-        centerTitle: true,
-        actions: [
-          _isSubmitting
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : IconButton.filled(
-                  tooltip: 'Submit',
-                  icon: const Icon(Icons.send_rounded, size: 18),
-                  onPressed: _submitUpdate,
-                ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Drag handle ───────────────────────────────────────────────────
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Header ────────────────────────────────────────────────────────
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Suggest Edit',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.centerNode['centername'] ?? 'this center',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Info banner ───────────────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Contributing updates for ${widget.centerNode['centername'] ?? 'this center'}. All suggestions are reviewed by the community.',
+                'All suggestions are reviewed by the community before being applied.',
                 style: TextStyle(
                   color: colorScheme.onPrimaryContainer,
                   fontSize: 13,
@@ -300,107 +342,134 @@ class _UpdateCenterScreenState extends State<UpdateCenterScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 8),
-                  child: Text(
-                    'INFORMATION TYPE',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.primary,
-                      letterSpacing: 1,
-                    ),
-                  ),
+
+            // ── Type selector ─────────────────────────────────────────────────
+            Text(
+              'INFORMATION TYPE',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: colorScheme.primary,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedType,
+              dropdownColor: colorScheme.surface,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: colorScheme.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
                 ),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedType,
-                  dropdownColor: colorScheme.surface,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerLow,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+              ),
+              items: ['Location Locator', 'Contact Person']
+                  .map(
+                    (type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(
+                        type,
+                        style: TextStyle(color: colorScheme.onSurface),
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                  ),
-                  items: ['Location Locator', 'Contact Person']
-                      .map(
-                        (type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(
-                            type,
-                            style: TextStyle(color: colorScheme.onSurface),
-                          ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => _selectedType = value);
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Fields ────────────────────────────────────────────────────────
+            if (_selectedType == 'Location Locator') ...[
+              _buildModernField(
+                _latLngController,
+                'Latitude / Longitude',
+                Icons.explore_rounded,
+                colorScheme,
+              ),
+              _buildModernField(
+                _mapsLinkController,
+                'Google Maps Link',
+                Icons.link_rounded,
+                colorScheme,
+              ),
+              _buildModernField(
+                _locationNotesController,
+                'Additional Notes',
+                Icons.notes_rounded,
+                colorScheme,
+                maxLines: 3,
+              ),
+            ] else ...[
+              _buildModernField(
+                _nameController,
+                'Contact Name',
+                Icons.person_rounded,
+                colorScheme,
+              ),
+              _buildModernField(
+                _positionController,
+                'Role / Position',
+                Icons.badge_rounded,
+                colorScheme,
+                helperText: 'Example: Local President',
+              ),
+              _buildModernField(
+                _contactNumberController,
+                'Contact Number',
+                Icons.phone_rounded,
+                colorScheme,
+                isPhone: true,
+              ),
+              _buildModernField(
+                _contactNotesController,
+                'Additional Notes',
+                Icons.notes_rounded,
+                colorScheme,
+                maxLines: 3,
+              ),
+            ],
+
+            // ── Submit button ─────────────────────────────────────────────────
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _isSubmitting
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _selectedType = value);
-                  },
-                ),
-                const SizedBox(height: 24),
-                if (_selectedType == 'Location Locator') ...[
-                  _buildModernField(
-                    _latLngController,
-                    'Latitude / Longitude',
-                    Icons.explore_rounded,
-                    colorScheme,
-                  ),
-                  _buildModernField(
-                    _mapsLinkController,
-                    'Google Maps Link',
-                    Icons.link_rounded,
-                    colorScheme,
-                  ),
-                  _buildModernField(
-                    _locationNotesController,
-                    'Additional Notes',
-                    Icons.notes_rounded,
-                    colorScheme,
-                    maxLines: 3,
-                  ),
-                ] else ...[
-                  _buildModernField(
-                    _nameController,
-                    'Contact Name',
-                    Icons.person_rounded,
-                    colorScheme,
-                  ),
-                  _buildModernField(
-                    _positionController,
-                    'Role / Position',
-                    Icons.badge_rounded,
-                    colorScheme,
-                    helperText: 'Example: Local President',
-                  ),
-                  _buildModernField(
-                    _contactNumberController,
-                    'Contact Number',
-                    Icons.phone_rounded,
-                    colorScheme,
-                    isPhone: true,
-                  ),
-                  _buildModernField(
-                    _contactNotesController,
-                    'Additional Notes',
-                    Icons.notes_rounded,
-                    colorScheme,
-                    maxLines: 3,
-                  ),
-                ],
-              ],
+                      ),
+                    )
+                  : FilledButton.icon(
+                      onPressed: _submitUpdate,
+                      // icon: const Icon(Icons.send_rounded, size: 16),
+                      label: const Text(
+                        'Submit Suggestion',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
             ),
           ],
         ),

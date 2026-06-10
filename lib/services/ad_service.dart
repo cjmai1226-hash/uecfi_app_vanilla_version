@@ -213,6 +213,7 @@ class AdBannerWidget extends StatefulWidget {
 class _AdBannerWidgetState extends State<AdBannerWidget> {
   late BannerAd _bannerAd;
   bool _isAdLoaded = false;
+  bool _isClosed = false;
 
   @override
   void initState() {
@@ -259,15 +260,47 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!AdService().isSupportedPlatform || !_isAdLoaded) {
+    if (!AdService().isSupportedPlatform || !_isAdLoaded || _isClosed) {
       return const SizedBox.shrink();
     }
-    return Center(
-      child: Container(
-        alignment: Alignment.center,
-        width: _bannerAd.size.width.toDouble(),
-        height: _bannerAd.size.height.toDouble(),
-        child: AdWidget(ad: _bannerAd),
+    return SizedBox(
+      height: widget.height,
+      child: Center(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              alignment: Alignment.center,
+              width: _bannerAd.size.width.toDouble(),
+              height: _bannerAd.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd),
+            ),
+            Positioned(
+              right: -8,
+              top: -8,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isClosed = true;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

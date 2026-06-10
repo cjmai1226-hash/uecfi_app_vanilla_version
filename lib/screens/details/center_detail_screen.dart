@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/ad_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../forms/update_center_screen.dart';
 import '../../widgets/main_app_bar.dart';
@@ -94,25 +93,6 @@ class _CenterDetailScreenState extends State<CenterDetailScreen> {
                       height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color:
-                          colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      district.toString().toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSecondaryContainer,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -150,10 +130,10 @@ class _CenterDetailScreenState extends State<CenterDetailScreen> {
               const SizedBox(height: 32),
             ],
 
-            // Info Sections
+            // Info Sections — single unified list
             _buildInfoCard(
               context,
-              title: 'Location Detail',
+              title: 'Center Info',
               children: [
                 _buildInfoTile(
                   context,
@@ -162,17 +142,15 @@ class _CenterDetailScreenState extends State<CenterDetailScreen> {
                   value: displayLocation.isNotEmpty
                       ? displayLocation
                       : 'Location details unavailable',
-                  onTap: (address.isNotEmpty || location.isNotEmpty)
-                      ? () => _openMap(location, address)
-                      : null,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInfoCard(
-              context,
-              title: 'Additional Info',
-              children: [
+                const Divider(indent: 52),
+                _buildInfoTile(
+                  context,
+                  icon: Icons.location_city_rounded,
+                  label: 'District',
+                  value: district,
+                ),
+                const Divider(indent: 52),
                 _buildInfoTile(
                   context,
                   icon: Icons.phone_rounded,
@@ -193,8 +171,6 @@ class _CenterDetailScreenState extends State<CenterDetailScreen> {
             ),
 
             const SizedBox(height: 48),
-            const AdBannerWidget(),
-            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -229,15 +205,7 @@ class _CenterDetailScreenState extends State<CenterDetailScreen> {
           context,
           icon: Icons.edit_note_rounded,
           label: 'Suggest Edit',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    UpdateCenterScreen(centerNode: widget.centerNode),
-              ),
-            );
-          },
+          onTap: () => UpdateCenterSheet.show(context, widget.centerNode),
         ),
       ],
     );

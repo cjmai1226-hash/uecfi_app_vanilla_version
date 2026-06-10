@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
+import '../services/ad_service.dart';
 import 'details/song_detail_screen.dart';
 import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
@@ -77,18 +78,6 @@ class SongsScreen extends StatelessWidget {
                                 horizontal: 16,
                                 vertical: 8,
                               ),
-                              leading: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  Icons.music_note_rounded,
-                                  color: colorScheme.primary,
-                                  size: 24,
-                                ),
-                              ),
                               title: Text(
                                 title,
                                 style: const TextStyle(
@@ -110,11 +99,43 @@ class SongsScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              trailing: Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                                size: 14,
-                              ),
+                              trailing: (song['chords'] != null &&
+                                      song['chords'].toString().trim().isNotEmpty)
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primaryContainer.withValues(alpha: 0.6),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: colorScheme.primary.withValues(alpha: 0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.music_note_rounded,
+                                            size: 12,
+                                            color: colorScheme.primary,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'CHORDS',
+                                            style: TextStyle(
+                                              color: colorScheme.onPrimaryContainer,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : null,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -134,6 +155,9 @@ class SongsScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+      bottomNavigationBar: const SafeArea(
+        child: AdBannerWidget(),
       ),
     );
   }

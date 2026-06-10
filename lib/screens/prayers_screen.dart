@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/database_helper.dart';
+import '../services/ad_service.dart';
 import '../providers/settings_provider.dart';
 import 'details/prayer_detail_screen.dart';
 import 'search_screen.dart';
@@ -87,18 +88,6 @@ class PrayersScreen extends StatelessWidget {
                                 horizontal: 16,
                                 vertical: 8,
                               ),
-                              leading: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  Icons.auto_stories_rounded,
-                                  color: colorScheme.primary,
-                                  size: 24,
-                                ),
-                              ),
                               title: Text(
                                 title.toString(),
                                 style: const TextStyle(
@@ -120,17 +109,15 @@ class PrayersScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              trailing: Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                                size: 14,
-                              ),
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        PrayerDetailScreen(prayer: prayer),
+                                    builder: (context) => PrayerDetailScreen(
+                                      prayer: prayer,
+                                      allPrayers: snapshot.data!,
+                                      initialIndex: index,
+                                    ),
                                   ),
                                 );
                               },
@@ -145,6 +132,9 @@ class PrayersScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+      bottomNavigationBar: const SafeArea(
+        child: AdBannerWidget(),
       ),
     );
   }

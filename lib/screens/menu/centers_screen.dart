@@ -3,6 +3,7 @@ import '../../services/database_helper.dart';
 import '../details/center_detail_screen.dart';
 import '../search_screen.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../services/ad_service.dart';
 
 class CentersScreen extends StatefulWidget {
   const CentersScreen({super.key, this.onOpenDrawer});
@@ -83,15 +84,6 @@ class _CentersScreenState extends State<CentersScreen> {
                           final String district = rawDistrict.isNotEmpty ? rawDistrict : 'Uncategorized';
                           final String subtitleText = address.isNotEmpty ? address : location;
 
-                          String avatarText = '?';
-                          if (district == 'Foreign-Based') {
-                            avatarText = 'FB';
-                          } else if (district.contains('District')) {
-                            final number = district.replaceAll(RegExp(r'[^0-9]'), '');
-                            avatarText = 'D$number';
-                          } else if (district.isNotEmpty) {
-                            avatarText = district.substring(0, 1).toUpperCase();
-                          }
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -103,23 +95,6 @@ class _CentersScreenState extends State<CentersScreen> {
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 8,
-                                ),
-                                leading: Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    avatarText,
-                                    style: TextStyle(
-                                      color: colorScheme.primary,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                    ),
-                                  ),
                                 ),
                                 title: Text(
                                   name.toString(),
@@ -142,10 +117,28 @@ class _CentersScreenState extends State<CentersScreen> {
                                     ),
                                   ),
                                 ),
-                                trailing: Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                                  size: 14,
+                                trailing: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primaryContainer.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colorScheme.primary.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    district,
+                                    style: TextStyle(
+                                      color: colorScheme.onPrimaryContainer,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                                 ),
                                 onTap: () {
                                   Navigator.push(
@@ -167,6 +160,9 @@ class _CentersScreenState extends State<CentersScreen> {
             ],
           );
         },
+      ),
+      bottomNavigationBar: const SafeArea(
+        child: AdBannerWidget(),
       ),
     );
   }

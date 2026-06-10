@@ -469,11 +469,49 @@ class _SearchScreenState extends State<SearchScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            trailing: Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
+            trailing: type == 'Song'
+                ? ((item['chords'] != null &&
+                        item['chords'].toString().trim().isNotEmpty)
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.music_note_rounded,
+                              size: 12,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'CHORDS',
+                              style: TextStyle(
+                                color: colorScheme.onPrimaryContainer,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : null)
+                : Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  ),
             onTap: () {
               if (type == 'Prayer') {
                 Navigator.push(

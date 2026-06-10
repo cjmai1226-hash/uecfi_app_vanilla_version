@@ -5,50 +5,29 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static const Color googleBlue = Color(0xFF1a73e8);
 
-  static TextStyle _getFontStyle(
-    String fontStyle, {
+  static TextStyle _getFontStyle({
     Color? color,
     double? fontSize,
     FontWeight? fontWeight,
     double? letterSpacing,
   }) {
-    final style = TextStyle(
-      color: color,
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      letterSpacing: letterSpacing,
+    return GoogleFonts.inter(
+      textStyle: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+      ),
     );
-    switch (fontStyle) {
-      case 'Roboto':
-        return GoogleFonts.roboto(textStyle: style);
-      case 'Open Sans':
-        return GoogleFonts.openSans(textStyle: style);
-      case 'System':
-        return style;
-      case 'Outfit':
-      default:
-        return GoogleFonts.outfit(textStyle: style);
-    }
   }
 
-  static TextTheme _getTextTheme(String fontStyle, TextTheme baseTheme) {
-    switch (fontStyle) {
-      case 'Roboto':
-        return GoogleFonts.robotoTextTheme(baseTheme);
-      case 'Open Sans':
-        return GoogleFonts.openSansTextTheme(baseTheme);
-      case 'System':
-        return baseTheme;
-      case 'Outfit':
-      default:
-        return GoogleFonts.outfitTextTheme(baseTheme);
-    }
+  static TextTheme _getTextTheme(TextTheme baseTheme) {
+    return GoogleFonts.interTextTheme(baseTheme);
   }
 
   static ThemeData themeData({
     bool isDarkMode = false,
     Color seedColor = googleBlue,
-    String fontStyle = 'Outfit',
   }) {
     final brightness = isDarkMode ? Brightness.dark : Brightness.light;
     final backgroundColor = isDarkMode ? Colors.black : Colors.white;
@@ -79,7 +58,6 @@ class AppTheme {
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
         titleTextStyle: _getFontStyle(
-          fontStyle,
           color: onSurfaceColor,
           fontSize: 22,
           fontWeight: FontWeight.w700,
@@ -91,11 +69,10 @@ class AppTheme {
         selectedIconTheme: IconThemeData(color: seedColor),
         unselectedIconTheme: IconThemeData(color: iconColor),
         selectedLabelTextStyle: _getFontStyle(
-          fontStyle,
           color: seedColor,
           fontWeight: FontWeight.bold,
         ),
-        unselectedLabelTextStyle: _getFontStyle(fontStyle, color: iconColor),
+        unselectedLabelTextStyle: _getFontStyle(color: iconColor),
         indicatorColor: seedColor.withValues(alpha: 0.1),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -111,14 +88,12 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return _getFontStyle(
-              fontStyle,
               color: seedColor,
               fontWeight: FontWeight.w800,
               fontSize: 13,
             );
           }
           return _getFontStyle(
-            fontStyle,
             color: iconColor,
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -143,7 +118,7 @@ class AppTheme {
           ),
         ),
       ),
-      textTheme: _getTextTheme(fontStyle, baseTheme.textTheme),
+      textTheme: _getTextTheme(baseTheme.textTheme),
       dividerTheme: DividerThemeData(
         color: onSurfaceColor.withValues(alpha: 0.05),
         thickness: 1,
