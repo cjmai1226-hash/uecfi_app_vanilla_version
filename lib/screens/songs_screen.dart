@@ -4,6 +4,7 @@ import '../services/ad_service.dart';
 import 'details/song_detail_screen.dart';
 import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
+import '../widgets/chatgpt_design_system.dart';
 
 class SongsScreen extends StatelessWidget {
   const SongsScreen({super.key, this.onOpenDrawer});
@@ -69,71 +70,39 @@ class SongsScreen extends StatelessWidget {
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Material(
-                            color: colorScheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(24),
-                            clipBehavior: Clip.antiAlias,
+                          child: ChatGPTCard(
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 8,
+                                vertical: 6,
                               ),
                               title: Text(
                                 title,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   fontSize: 16,
-                                  letterSpacing: -0.5,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
                               subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 2),
+                                padding: const EdgeInsets.only(top: 4),
                                 child: Text(
                                   content,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
                               trailing: (song['chords'] != null &&
                                       song['chords'].toString().trim().isNotEmpty)
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: colorScheme.primary.withValues(alpha: 0.3),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.music_note_rounded,
-                                            size: 12,
-                                            color: colorScheme.primary,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'CHORDS',
-                                            style: TextStyle(
-                                              color: colorScheme.onPrimaryContainer,
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  ? const ChatGPTTag(
+                                      label: 'CHORDS',
+                                      icon: Icons.music_note_rounded,
+                                      fontSize: 9,
                                     )
                                   : null,
                               onTap: () {

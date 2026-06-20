@@ -4,6 +4,7 @@ import '../details/center_detail_screen.dart';
 import '../search_screen.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../services/ad_service.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class CentersScreen extends StatefulWidget {
   const CentersScreen({super.key, this.onOpenDrawer});
@@ -87,58 +88,35 @@ class _CentersScreenState extends State<CentersScreen> {
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: Material(
-                              color: colorScheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(24),
-                              clipBehavior: Clip.antiAlias,
+                            child: ChatGPTCard(
                               child: ListTile(
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
-                                  vertical: 8,
+                                  vertical: 6,
                                 ),
                                 title: Text(
                                   name.toString(),
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     fontSize: 16,
-                                    letterSpacing: -0.5,
+                                    letterSpacing: -0.3,
                                   ),
                                 ),
                                 subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 2),
+                                  padding: const EdgeInsets.only(top: 4),
                                   child: Text(
                                     subtitleText.isEmpty ? 'No address provided' : subtitleText,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: colorScheme.onSurfaceVariant,
+                                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                                       fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
-                                trailing: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: colorScheme.primary.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    district,
-                                    style: TextStyle(
-                                      color: colorScheme.onPrimaryContainer,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
+                                trailing: ChatGPTTag(
+                                  label: district,
                                 ),
                                 onTap: () {
                                   Navigator.push(

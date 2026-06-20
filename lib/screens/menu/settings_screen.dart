@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/ad_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -48,73 +49,78 @@ class SettingsScreen extends StatelessWidget {
     required void Function(String) onSelected,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: colorScheme.surface,
+      backgroundColor: isDark ? const Color(0xFF171717) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag handle
               Center(
                 child: Container(
-                  width: 40,
+                  width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                    color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                  letterSpacing: -0.4,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 16),
               ...items.map(
-                (item) => ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                  title: Text(
-                    item,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: selected == item
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                      color: selected == item
-                          ? colorScheme.primary
-                          : colorScheme.onSurface,
+                (item) {
+                  final isSelected = selected == item;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.03))
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                  trailing: selected == item
-                      ? Icon(
-                          Icons.check_rounded,
-                          color: colorScheme.primary,
-                          size: 20,
-                        )
-                      : null,
-                  onTap: () {
-                    onSelected(item);
-                    Navigator.pop(ctx);
-                  },
-                ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      title: Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: isDark ? Colors.white : Colors.black,
+                              size: 20,
+                            )
+                          : null,
+                      onTap: () {
+                        onSelected(item);
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -128,106 +134,96 @@ class SettingsScreen extends StatelessWidget {
     Color currentColor,
     ColorScheme colorScheme,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: colorScheme.surface,
+      backgroundColor: isDark ? const Color(0xFF171717) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 16, 28, 36),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 40,
+                  width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                    color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text(
-                  'Accent Color',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
+              Text(
+                'Accent Color',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                  letterSpacing: -0.4,
                 ),
               ),
               const SizedBox(height: 24),
               Wrap(
-                spacing: 20,
-                runSpacing: 20,
+                spacing: 16,
+                runSpacing: 16,
                 children: _accentColors.entries.map((entry) {
-                  final isSelected =
-                      entry.value.toARGB32() == currentColor.toARGB32();
+                  final isSelected = entry.value.toARGB32() == currentColor.toARGB32();
                   return GestureDetector(
                     onTap: () {
-                      context.read<SettingsProvider>().updateColorSeed(
-                        entry.value,
-                      );
+                      context.read<SettingsProvider>().updateColorSeed(entry.value);
                       Navigator.pop(ctx);
                     },
                     child: SizedBox(
-                      width: 60,
+                      width: 70,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            width: 52,
-                            height: 52,
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
                               color: entry.value,
                               shape: BoxShape.circle,
                               border: isSelected
                                   ? Border.all(
-                                      color: colorScheme.onSurface,
+                                      color: isDark ? Colors.white : Colors.black,
                                       width: 3,
                                     )
                                   : null,
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: entry.value.withValues(
-                                          alpha: 0.45,
-                                        ),
-                                        blurRadius: 14,
-                                        spreadRadius: 2,
+                                        color: entry.value.withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                        spreadRadius: 1,
                                       ),
                                     ]
                                   : [],
                             ),
                             child: isSelected
-                                ? const Icon(
+                                ? Icon(
                                     Icons.check_rounded,
-                                    color: Colors.white,
-                                    size: 26,
+                                    color: isDark ? Colors.black : Colors.white,
+                                    size: 20,
                                   )
                                 : null,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             entry.key,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurfaceVariant,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -254,7 +250,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: const MainAppBar(title: 'Settings', showBackButton: true),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
           // ── Appearance ───────────────────────────────────────────────────────
           _buildSectionHeader('Appearance', colorScheme),
@@ -263,7 +259,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _buildChevronTile(
                 context,
-                icon: Icons.brightness_6_rounded,
+                icon: Icons.brightness_6_outlined,
                 title: 'Appearance',
                 subtitle: settings.themeModeLabel,
                 colorScheme: colorScheme,
@@ -272,20 +268,18 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Appearance',
                   items: const ['System (Default)', 'Light', 'Dark'],
                   selected: settings.themeModeLabel,
-                  onSelected: (v) =>
-                      context.read<SettingsProvider>().updateThemeMode(v),
+                  onSelected: (v) => context.read<SettingsProvider>().updateThemeMode(v),
                 ),
               ),
               _buildDivider(colorScheme),
               _buildChevronTile(
                 context,
-                icon: Icons.palette_rounded,
+                icon: Icons.palette_outlined,
                 title: 'Accent Color',
                 subtitle: colorName,
                 subtitleDot: settings.colorSeed,
                 colorScheme: colorScheme,
-                onTap: () =>
-                    _showColorSheet(context, settings.colorSeed, colorScheme),
+                onTap: () => _showColorSheet(context, settings.colorSeed, colorScheme),
               ),
               _buildDivider(colorScheme),
               _buildChevronTile(
@@ -299,9 +293,7 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Font Size',
                   items: const ['Small', 'Medium', 'Large', 'Extra Large'],
                   selected: fontSizeName,
-                  onSelected: (v) => context
-                      .read<SettingsProvider>()
-                      .updateFontSize(_fontSizes[v]!),
+                  onSelected: (v) => context.read<SettingsProvider>().updateFontSize(_fontSizes[v]!),
                 ),
               ),
             ],
@@ -325,14 +317,13 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Prayer Language',
                   items: const ['Ilocano', 'Tagalog'],
                   selected: settings.prayerLanguage,
-                  onSelected: (v) =>
-                      context.read<SettingsProvider>().updatePrayerLanguage(v),
+                  onSelected: (v) => context.read<SettingsProvider>().updatePrayerLanguage(v),
                 ),
               ),
               _buildDivider(colorScheme),
               _buildSwitchTile(
                 context,
-                icon: Icons.music_note_rounded,
+                icon: Icons.music_note_outlined,
                 title: 'Show Chords',
                 colorScheme: colorScheme,
                 value: settings.showChords,
@@ -343,9 +334,7 @@ class SettingsScreen extends StatelessWidget {
                       context: context,
                       title: 'Enable Show Chords',
                       content: 'Watch a short ad to unlock chord views?',
-                      onReward: () => context
-                          .read<SettingsProvider>()
-                          .toggleShowChords(true),
+                      onReward: () => context.read<SettingsProvider>().toggleShowChords(true),
                     );
                   } else {
                     context.read<SettingsProvider>().toggleShowChords(false);
@@ -377,7 +366,7 @@ class SettingsScreen extends StatelessWidget {
               _buildDivider(colorScheme),
               _buildChevronTile(
                 context,
-                icon: Icons.music_note_rounded,
+                icon: Icons.music_note_outlined,
                 title: 'Chord Instrument',
                 subtitle: settings.chordInstrument,
                 colorScheme: colorScheme,
@@ -386,8 +375,7 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Chord Instrument',
                   items: const ['Guitar', 'Ukulele'],
                   selected: settings.chordInstrument,
-                  onSelected: (v) =>
-                      context.read<SettingsProvider>().updateChordInstrument(v),
+                  onSelected: (v) => context.read<SettingsProvider>().updateChordInstrument(v),
                 ),
               ),
             ],
@@ -405,34 +393,31 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(String title, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+      padding: const EdgeInsets.only(left: 8, bottom: 12, top: 12),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: colorScheme.primary,
-          letterSpacing: 0.1,
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+          letterSpacing: 1.5,
         ),
       ),
     );
   }
 
   Widget _buildCard(BuildContext context, {required List<Widget> children}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(28),
-      clipBehavior: Clip.antiAlias,
+    return ChatGPTCard(
       child: Column(children: children),
     );
   }
 
   Widget _buildDivider(ColorScheme colorScheme) {
+    final isDark = colorScheme.brightness == Brightness.dark;
     return Divider(
       height: 1,
-      indent: 68,
-      color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+      indent: 60,
+      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
     );
   }
 
@@ -445,15 +430,16 @@ class SettingsScreen extends StatelessWidget {
     required VoidCallback onTap,
     Color? subtitleDot,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
+          color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: colorScheme.primary, size: 22),
+        child: Icon(icon, color: colorScheme.onSurface, size: 20),
       ),
       title: Text(
         title,
@@ -477,7 +463,7 @@ class SettingsScreen extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 13,
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -502,22 +488,23 @@ class SettingsScreen extends StatelessWidget {
     required Color seedColor,
     bool isEnabled = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isEnabled
-              ? colorScheme.primaryContainer.withValues(alpha: 0.4)
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+              ? (isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF))
+              : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F0F0)),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
           color: isEnabled
-              ? colorScheme.primary
+              ? colorScheme.onSurface
               : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-          size: 22,
+          size: 20,
         ),
       ),
       title: Text(
@@ -541,14 +528,13 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildSystemInfo(ColorScheme colorScheme) {
     return Column(
       children: [
-        const Divider(height: 1),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         Text(
           'UECFI App',
           style: TextStyle(
             color: colorScheme.onSurface,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
           ),
         ),
@@ -556,17 +542,17 @@ class SettingsScreen extends StatelessWidget {
         Text(
           'Version 2.0.2 • Build 35',
           style: TextStyle(
-            color: colorScheme.onSurfaceVariant,
-            fontSize: 12,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           '© 2026 DevChristian. All rights reserved.',
           style: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            fontSize: 11,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+            fontSize: 10,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -574,3 +560,4 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+

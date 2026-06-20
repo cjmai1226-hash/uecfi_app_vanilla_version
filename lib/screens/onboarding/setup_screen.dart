@@ -4,6 +4,7 @@ import '../../providers/settings_provider.dart';
 import '../../services/database_helper.dart';
 import '../menu/terms_agreements_screen.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class OnboardingSetupScreen extends StatefulWidget {
   const OnboardingSetupScreen({super.key});
@@ -182,245 +183,221 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Tell us about yourself',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                  letterSpacing: -0.5,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tell us about yourself',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                    letterSpacing: -0.8,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please provide your details to keep the community vibrant and connected.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                  height: 1.5,
+                const SizedBox(height: 8),
+                Text(
+                  'Please provide your details to keep the community vibrant and connected.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Member ID Display
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.secondary.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.badge_rounded, color: colorScheme.secondary, size: 20),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'MEMBER ID',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: colorScheme.secondary,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          context.read<SettingsProvider>().userId,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.onSecondaryContainer,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildModernField(
-                controller: _firstNameController,
-                label: 'First Name',
-                icon: Icons.badge_outlined,
-                colorScheme: colorScheme,
-                validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
-              ),
-              _buildModernField(
-                controller: _surnameController,
-                label: 'Surname',
-                icon: Icons.person_rounded,
-                colorScheme: colorScheme,
-                validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
-              ),
-              _buildModernField(
-                controller: _nicknameController,
-                label: 'Nickname',
-                icon: Icons.face_rounded,
-                colorScheme: colorScheme,
-                validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
-              ),
-              _buildModernField(
-                controller: _emailController,
-                label: 'Email',
-                icon: Icons.alternate_email_rounded,
-                keyboardType: TextInputType.emailAddress,
-                colorScheme: colorScheme,
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'Required';
-                  if (!val.contains('@')) return 'Invalid Email';
-                  return null;
-                },
-              ),
-              const Divider(height: 48),
-              Text(
-                'Church Details',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.primary,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Center Selector
-              InkWell(
-                onTap: _isLoadingCenters ? null : _showCenterPicker,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.1),
-                    ),
-                  ),
+                // Member ID Display
+                ChatGPTCard(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.church_rounded, color: colorScheme.primary),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isManualCenter 
-                                ? 'Other / Not Listed' 
-                                : (_selectedCenterMap?['centername'] ?? 'Select Local Center'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            if (!_isManualCenter && _selectedCenterMap == null)
-                              Text(
-                                'Find your local church center',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                                ),
-                              ),
-                          ],
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(Icons.badge_rounded, color: colorScheme.primary, size: 20),
                       ),
-                      Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MEMBER ID',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.primary,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            context.read<SettingsProvider>().userId,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ),
-              
-              const SizedBox(height: 16),
-
-              if (!_isManualCenter && _selectedCenterMap != null)
-                _buildReadOnlyInfoCard(colorScheme),
-
-              if (_isManualCenter) ...[
-                const SizedBox(height: 8),
-                _buildModernField(
-                  controller: _districtController,
-                  label: 'District',
-                  icon: Icons.location_city_outlined,
-                  colorScheme: colorScheme,
+                const SizedBox(height: 24),
+                
+                ChatGPTTextField(
+                  controller: _firstNameController,
+                  label: 'First Name',
+                  icon: Icons.badge_outlined,
                   validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
                 ),
-                _buildModernField(
-                  controller: _centerNameController,
-                  label: 'Local Center Name',
-                  icon: Icons.home_work_outlined,
-                  colorScheme: colorScheme,
+                ChatGPTTextField(
+                  controller: _surnameController,
+                  label: 'Surname',
+                  icon: Icons.person_rounded,
                   validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
                 ),
-                _buildModernField(
-                  controller: _centerAddressController,
-                  label: 'Center Address',
-                  icon: Icons.pin_drop_outlined,
-                  colorScheme: colorScheme,
+                ChatGPTTextField(
+                  controller: _nicknameController,
+                  label: 'Nickname',
+                  icon: Icons.face_rounded,
                   validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
                 ),
-              ],
-              
-              const SizedBox(height: 48),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: FilledButton(
-                  onPressed: (_isLoadingCenters || _isCheckingEmail) ? null : _onProceed,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                ChatGPTTextField(
+                  controller: _emailController,
+                  label: 'Email Address',
+                  icon: Icons.alternate_email_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Required';
+                    if (!val.contains('@')) return 'Invalid Email';
+                    return null;
+                  },
+                ),
+                const Divider(height: 48),
+                Text(
+                  'Church Details',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.primary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Center Selector
+                ChatGPTCard(
+                  child: InkWell(
+                    onTap: _isLoadingCenters ? null : _showCenterPicker,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.church_rounded, color: colorScheme.primary.withValues(alpha: 0.7), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isManualCenter 
+                                    ? 'Other / Not Listed' 
+                                    : (_selectedCenterMap?['centername'] ?? 'Select Local Center'),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                if (!_isManualCenter && _selectedCenterMap == null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      'Find your local church center',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.onSurfaceVariant),
+                        ],
+                      ),
                     ),
                   ),
-                  child: _isCheckingEmail
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Next: Community Guidelines',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
                 ),
-              ),
-              const SizedBox(height: 48),
-            ],
+                
+                const SizedBox(height: 24),
+
+                if (!_isManualCenter && _selectedCenterMap != null)
+                  _buildReadOnlyInfoCard(colorScheme),
+
+                if (_isManualCenter) ...[
+                  const SizedBox(height: 8),
+                  ChatGPTTextField(
+                    controller: _districtController,
+                    label: 'District',
+                    icon: Icons.location_city_outlined,
+                    validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                  ),
+                  ChatGPTTextField(
+                    controller: _centerNameController,
+                    label: 'Local Center Name',
+                    icon: Icons.home_work_outlined,
+                    validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                  ),
+                  ChatGPTTextField(
+                    controller: _centerAddressController,
+                    label: 'Center Address',
+                    icon: Icons.pin_drop_outlined,
+                    validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                  ),
+                ],
+                
+                const SizedBox(height: 48),
+                
+                ChatGPTButton(
+                  onPressed: (_isLoadingCenters || _isCheckingEmail) ? null : _onProceed,
+                  isLoading: _isCheckingEmail,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Next: Community Guidelines',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 48),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
   Widget _buildReadOnlyInfoCard(ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-      ),
+    return ChatGPTCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -463,40 +440,6 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildModernField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required ColorScheme colorScheme,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        keyboardType: keyboardType,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: colorScheme.primary, size: 22),
-          filled: true,
-          fillColor: colorScheme.surfaceContainerLow,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide(color: colorScheme.error, width: 1),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
     );
   }
 }

@@ -8,18 +8,25 @@ import '../services/ad_service.dart';
 import 'comments_screen.dart';
 import 'forms/create_post_screen.dart';
 import 'search_screen.dart';
-import '../utils/color_utils.dart';
 import 'menu/profile_screen.dart';
 import '../widgets/main_app_bar.dart';
+import '../widgets/chatgpt_design_system.dart';
+import '../utils/color_utils.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onOpenDrawer});
 
   final VoidCallback? onOpenDrawer;
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -29,13 +36,17 @@ class HomeScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
               ),
               child: Icon(
                 Icons.forum_rounded,
                 size: 64,
-                color: colorScheme.primary,
+                color: isDark ? Colors.white : const Color(0xFF0F0F0F),
               ),
             ),
             const SizedBox(height: 32),
@@ -43,8 +54,9 @@ class HomeScreen extends StatelessWidget {
               'No posts yet!',
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: colorScheme.onSurface,
+                letterSpacing: -0.6,
               ),
             ),
             const SizedBox(height: 12),
@@ -53,22 +65,76 @@ class HomeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 40),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreatePostScreen(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComposer(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final containerBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9);
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08);
+
+    final String initial = settings.nickname.isNotEmpty
+        ? settings.nickname[0].toUpperCase()
+        : 'U';
+    final Color avatarBg = ColorUtils.getAvatarColor(settings.nickname);
+
+    return GestureDetector(
+      onTap: () => CreatePostScreen.show(context),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: settings.nickname == 'DEVELOPER'
+                  ? Colors.amber.shade700
+                  : avatarBg,
+              child: settings.nickname == 'DEVELOPER'
+                  ? const Icon(
+                      Icons.verified_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: containerBg,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: borderColor, width: 1.5),
+                ),
+                child: Text(
+                  settings.nickname.isNotEmpty
+                      ? "What's on your mind, ${settings.nickname}?"
+                      : "What's on your mind?",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w400,
                   ),
-                );
-              },
-              icon: const Icon(Icons.add_comment_rounded),
-              label: const Text('Share a Post'),
+                ),
+              ),
             ),
           ],
         ),
@@ -81,7 +147,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: MainAppBar(
         title: 'Community Forum',
-        onOpenDrawer: onOpenDrawer,
+        onOpenDrawer: widget.onOpenDrawer,
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
@@ -96,6 +162,9 @@ class HomeScreen extends StatelessWidget {
       ),
       body: CustomScrollView(
         slivers: [
+          SliverToBoxAdapter(
+            child: _buildComposer(context),
+          ),
           Consumer<SettingsProvider>(
             builder: (context, settings, child) {
               return StreamBuilder<QuerySnapshot>(
@@ -172,21 +241,11 @@ class HomeScreen extends StatelessWidget {
               children: [
                 SizedBox(height: 32),
                 AdBannerWidget(),
-                SizedBox(height: 80), // To avoid overlapping with FAB
+                SizedBox(height: 32),
               ],
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
-          );
-        },
-        icon: const Icon(Icons.add_comment_rounded),
-        label: const Text('New Post'),
       ),
     );
   }
@@ -215,10 +274,8 @@ class _PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<_PostCard> {
-  bool _isExpanded = false;
   late bool _isLiked;
   late int _likesCount;
-  final int _textLimit = 200;
   final GlobalKey _menuKey = GlobalKey();
 
   @override
@@ -362,221 +419,195 @@ class _PostCardState extends State<_PostCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final String content = widget.post['content'] ?? '';
-    final bool isLongText = content.length > _textLimit;
-    final String displayText = (_isExpanded || !isLongText)
-        ? content
-        : '${content.substring(0, _textLimit)}...';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: colorScheme.outlineVariant, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: widget.post['username'] == 'DEVELOPER'
-                      ? Colors.amber.shade700
-                      : ColorUtils.getAvatarColor(widget.post['username']),
-                  radius: 22,
-                  child: widget.post['username'] == 'DEVELOPER'
-                      ? const Icon(
-                          Icons.verified_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        )
-                      : Text(
-                          widget.post['username'].isNotEmpty
-                              ? widget.post['username'][0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.post['username'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      Text(
-                        widget.post['time'],
+    final avatarBg = widget.post['username'] == 'DEVELOPER'
+        ? Colors.amber.shade700
+        : ColorUtils.getAvatarColor(widget.post['username']);
+    final avatarFg = Colors.white;
+
+    return ChatGPTCard(
+      borderRadius: 16.0,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: avatarBg,
+                radius: 22,
+                child: widget.post['username'] == 'DEVELOPER'
+                    ? const Icon(
+                        Icons.verified_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      )
+                    : Text(
+                        widget.post['username'].isNotEmpty
+                            ? widget.post['username'][0].toUpperCase()
+                            : '?',
                         style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.7,
-                          ),
-                          fontWeight: FontWeight.w500,
+                          color: avatarFg,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.post['username'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    Text(
+                      widget.post['time'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.65,
+                        ),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton.filledTonal(
-                  key: _menuKey,
-                  icon: const Icon(Icons.more_horiz_rounded, size: 20),
-                  onPressed: () {
-                    final RenderBox button =
-                        _menuKey.currentContext!.findRenderObject()
-                            as RenderBox;
-                    final RenderBox overlay =
-                        Overlay.of(context).context.findRenderObject()
-                            as RenderBox;
-                    final RelativeRect position = RelativeRect.fromRect(
-                      Rect.fromPoints(
-                        button.localToGlobal(Offset.zero, ancestor: overlay),
-                        button.localToGlobal(
-                          button.size.bottomRight(Offset.zero),
-                          ancestor: overlay,
+              ),
+              IconButton(
+                key: _menuKey,
+                icon: const Icon(Icons.more_horiz_rounded, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+                  foregroundColor: isDark ? Colors.white : Colors.black87,
+                ),
+                onPressed: () {
+                  final RenderBox button =
+                      _menuKey.currentContext!.findRenderObject()
+                          as RenderBox;
+                  final RenderBox overlay =
+                      Overlay.of(context).context.findRenderObject()
+                          as RenderBox;
+                  final RelativeRect position = RelativeRect.fromRect(
+                    Rect.fromPoints(
+                      button.localToGlobal(Offset.zero, ancestor: overlay),
+                      button.localToGlobal(
+                        button.size.bottomRight(Offset.zero),
+                        ancestor: overlay,
+                      ),
+                    ),
+                    Offset.zero & overlay.size,
+                  );
+                  showMenu<String>(
+                    context: context,
+                    position: position,
+                    items: [
+                      const PopupMenuItem(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.flag_rounded,
+                              color: Colors.redAccent,
+                              size: 20,
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Report Post',
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Offset.zero & overlay.size,
-                    );
-                    showMenu<String>(
-                      context: context,
-                      position: position,
-                      items: [
+                      if (widget.post['authorEmail'] == context.read<SettingsProvider>().email)
                         const PopupMenuItem(
-                          value: 'report',
+                          value: 'edit',
                           child: Row(
                             children: [
                               Icon(
-                                Icons.flag_rounded,
-                                color: Colors.redAccent,
+                                Icons.edit_rounded,
+                                color: Colors.blueAccent,
                                 size: 20,
                               ),
                               SizedBox(width: 12),
                               Text(
-                                'Report Post',
+                                'Edit Post',
                                 style: TextStyle(
-                                  color: Colors.redAccent,
+                                  color: Colors.blueAccent,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (widget.post['authorEmail'] == context.read<SettingsProvider>().email)
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.edit_rounded,
-                                  color: Colors.blueAccent,
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Edit Post',
-                                  style: TextStyle(
-                                    color: Colors.blueAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ).then((value) {
-                      if (!mounted) return;
-                      if (value == 'report') {
-                        _showReportDialog();
-                      } else if (value == 'edit') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreatePostScreen(
-                              postToEdit: widget.post,
-                            ),
-                          ),
-                        );
-                      }
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              displayText,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w400,
+                    ],
+                  ).then((value) {
+                    if (!context.mounted) return;
+                    if (value == 'report') {
+                      _showReportDialog();
+                    } else if (value == 'edit') {
+                      CreatePostScreen.show(context, postToEdit: widget.post);
+                    }
+                  });
+                },
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LinkifiedText(
+            text: content,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.6,
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w400,
             ),
-            if (isLongText)
-              GestureDetector(
-                onTap: () => setState(() => _isExpanded = !_isExpanded),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    _isExpanded ? 'Show less' : 'Show more',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _InteractionPill(
+                icon: _isLiked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_outline_rounded,
+                label: '$_likesCount',
+                isHighlighted: _isLiked,
+                highlightColor: Colors.redAccent,
+                onTap: _toggleLike,
               ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                _InteractionPill(
-                  icon: _isLiked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_outline_rounded,
-                  label: '$_likesCount',
-                  isHighlighted: _isLiked,
-                  highlightColor: Colors.redAccent,
-                  onTap: _toggleLike,
+              const SizedBox(width: 12),
+              _InteractionPill(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: '${widget.post['comments']}',
+                onTap: () => _handleCommentAttempt(context),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.share_rounded, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+                  foregroundColor: isDark ? Colors.white : Colors.black87,
                 ),
-                const SizedBox(width: 12),
-                _InteractionPill(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: '${widget.post['comments']}',
-                  onTap: () => _handleCommentAttempt(context),
-                ),
-                const Spacer(),
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.share_rounded, size: 18),
-                  onPressed: () {
-                    final text =
-                        '${widget.post['username']} shared: "${widget.post['content']}"';
-                    SharePlus.instance.share(ShareParams(text: text));
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
+                onPressed: () {
+                  final text =
+                      '${widget.post['username']} shared: "${widget.post['content']}"';
+                  SharePlus.instance.share(ShareParams(text: text));
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -599,13 +630,19 @@ class _InteractionPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     final color = isHighlighted
-        ? (highlightColor ?? colorScheme.primary)
-        : colorScheme.onSurfaceVariant;
+        ? (highlightColor ?? (isDark ? Colors.white : Colors.black))
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.8);
+    final borderColor = isHighlighted
+        ? color.withValues(alpha: 0.3)
+        : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.1));
 
     return Material(
-      color: isHighlighted ? color.withValues(alpha: 0.1) : Colors.transparent,
+      color: isHighlighted 
+          ? color.withValues(alpha: 0.1) 
+          : (isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF)).withValues(alpha: 0.4),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -614,9 +651,7 @@ class _InteractionPill extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isHighlighted
-                  ? color.withValues(alpha: 0.2)
-                  : colorScheme.outlineVariant,
+              color: borderColor,
               width: 1,
             ),
             borderRadius: BorderRadius.circular(20),

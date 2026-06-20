@@ -1,7 +1,7 @@
 name: flutter_application_1
 description: "A new Flutter project."
 publish_to: 'none'
-version: 2.0.2+35
+version: 2.1.0+36
 
 environment:
   sdk: ^3.11.1
@@ -15,6 +15,7 @@ dependencies:
   # flutter_local_notifications: ^21.0.0
   google_fonts: ^8.0.2
   google_mobile_ads: ^7.0.0
+  http: ^1.6.0
   in_app_review: ^2.0.11
   package_info_plus: ^9.0.1
   path: ^1.9.1

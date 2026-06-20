@@ -4,11 +4,26 @@ import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ad_service.dart';
 import '../menu/profile_screen.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final Map<String, dynamic>? postToEdit;
 
   const CreatePostScreen({super.key, this.postToEdit});
+
+  /// Opens the Create/Edit Post as a modal bottom sheet.
+  static Future<void> show(
+    BuildContext context, {
+    Map<String, dynamic>? postToEdit,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CreatePostScreen(postToEdit: postToEdit),
+    );
+  }
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -16,7 +31,6 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
-
   bool _isSubmitting = false;
 
   @override
@@ -153,175 +167,65 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  Widget _buildModernField(
-    TextEditingController controller,
-    String label,
-    IconData icon,
-    ColorScheme colorScheme, {
-    int maxLines = 1,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Icon(icon, color: colorScheme.primary, size: 22),
-          filled: true,
-          fillColor: colorScheme.surfaceContainerLow,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.postToEdit != null ? 'Edit Post' : 'Create Post'),
-        centerTitle: true,
-        actions: [
-          _isSubmitting
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : FilledButton.icon(
-                  onPressed: _submitPost,
-                  icon: Icon(
-                    widget.postToEdit != null
-                        ? Icons.check_rounded
-                        : Icons.send_rounded,
-                    size: 18,
-                  ),
-                  label: Text(widget.postToEdit != null ? 'Update' : 'Publish'),
-                ),
-          const SizedBox(width: 8),
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF171717) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          children: [
-            Column(
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Posting Guide
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        colorScheme.primaryContainer.withValues(alpha: 0.3),
-                        colorScheme.secondaryContainer.withValues(alpha: 0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.tips_and_updates_rounded,
-                          color: colorScheme.primary,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'What to Share?',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: colorScheme.onPrimaryContainer,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Greet a friend, congratulate someone, or announce a local church anniversary. Ask a question? Share the joy with everyone!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.8,
-                                ),
-                                fontWeight: FontWeight.w500,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
                 ),
+                const SizedBox(height: 20),
 
-                _buildModernField(
-                  _contentController,
-                  'What do you want to share with the community?',
-                  Icons.edit_note_rounded,
-                  colorScheme,
-                  maxLines: 12,
+                ChatGPTTextField(
+                  controller: _contentController,
+                  label: 'What do you want to share with the community?',
+                  maxLines: 8,
                 ),
                 const SizedBox(height: 8),
-                Container(
+                ChatGPTCard(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  borderRadius: 12,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
                         size: 20,
-                        color: colorScheme.primary,
+                        color: isDark ? Colors.white70 : Colors.black87,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Note: This post will be automatically deleted after 5 days to keep the community feed fresh.',
                           style: TextStyle(
-                            color: colorScheme.onPrimaryContainer,
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                             fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             height: 1.4,
                           ),
                         ),
@@ -329,9 +233,33 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 32),
+                ChatGPTButton(
+                  onPressed: _isSubmitting ? null : _submitPost,
+                  isLoading: _isSubmitting,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        widget.postToEdit != null
+                            ? Icons.check_rounded
+                            : Icons.send_rounded,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.postToEdit != null ? 'Update Post' : 'Publish Post',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

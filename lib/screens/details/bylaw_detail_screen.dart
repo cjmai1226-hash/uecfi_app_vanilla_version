@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class BylawDetailScreen extends StatelessWidget {
   final Map<String, dynamic> bylaw;
@@ -17,34 +18,36 @@ class BylawDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            ChatGPTCard(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(24),
-              ),
               child: Row(
                 children: [
-                  Icon(Icons.gavel_rounded, color: colorScheme.primary, size: 32),
+                  Icon(
+                    Icons.gavel_rounded,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
+                    size: 32,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Chapter ${bylaw['chapters'] ?? ''}',
+                          'Chapter ${bylaw['chapters'] ?? ''}'.toUpperCase(),
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.primary,
-                            letterSpacing: 1.2,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                            letterSpacing: 1.5,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           bylaw['title'] ?? 'Untitled',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
                             letterSpacing: -0.5,
                           ),
                         ),

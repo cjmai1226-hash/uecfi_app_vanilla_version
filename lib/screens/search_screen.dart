@@ -9,6 +9,7 @@ import 'details/prayer_detail_screen.dart';
 import 'details/song_detail_screen.dart';
 import 'details/center_detail_screen.dart';
 import 'details/bylaw_detail_screen.dart';
+import '../widgets/chatgpt_design_system.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({
@@ -37,6 +38,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
+  bool _isSearchFocused = false;
 
   void _requestSearchFocus() {
     if (!mounted) return;
@@ -55,11 +57,20 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     _selectedFilter = widget.initialFilter ?? 'All';
     _searchController.addListener(_onSearchChanged);
+    _searchFocusNode.addListener(_onSearchFocusChanged);
     _loadRecentSearches();
 
     if (widget.autoFocusField) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _requestSearchFocus();
+      });
+    }
+  }
+
+  void _onSearchFocusChanged() {
+    if (_searchFocusNode.hasFocus != _isSearchFocused) {
+      setState(() {
+        _isSearchFocused = _searchFocusNode.hasFocus;
       });
     }
   }
@@ -91,6 +102,8 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -181,6 +194,7 @@ class _SearchScreenState extends State<SearchScreen> {
     required IconData icon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -190,27 +204,32 @@ class _SearchScreenState extends State<SearchScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
               ),
               child: Icon(
                 icon,
                 size: 48,
-                color: colorScheme.primary.withValues(alpha: 0.5),
+                color: isDark ? Colors.white : const Color(0xFF0F0F0F),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -224,109 +243,137 @@ class _SearchScreenState extends State<SearchScreen> {
     final settings = context.watch<SettingsProvider>();
     final isTagalog = settings.prayerLanguage == 'Tagalog';
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final containerBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9);
+    final borderColor = _isSearchFocused
+        ? (isDark ? Colors.white60 : Colors.black54)
+        : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08));
+    final borderWidth = _isSearchFocused ? 1.8 : 1.5;
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- Custom Google-Style Search Header ---
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Material(
-                color: colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(32),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    children: [
-                      const BackButton(),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          autofocus: widget.autoFocusField,
-                          textInputAction: TextInputAction.search,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                          decoration: InputDecoration(
-                            hintText: 'Search community...',
-                            hintStyle: TextStyle(
-                              color: colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.5,
+      body: GestureDetector(
+        onTap: () {
+          _searchFocusNode.unfocus();
+        },
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // --- Custom ChatGPT-Style Search Header ---
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: containerBg,
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: borderColor, width: borderWidth),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Row(
+                      children: [
+                        const BackButton(),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            autofocus: widget.autoFocusField,
+                            textInputAction: TextInputAction.search,
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Search community...',
+                              hintStyle: TextStyle(
+                                color: colorScheme.onSurfaceVariant.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
                               ),
                             ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
+                            onSubmitted: (value) {
+                              if (value.isNotEmpty) {
+                                _performSearch(value, saveToRecent: true);
+                              }
+                            },
                           ),
-                          onSubmitted: (value) {
-                            if (value.isNotEmpty) {
-                              _performSearch(value, saveToRecent: true);
-                            }
-                          },
                         ),
-                      ),
-                      if (_searchController.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchResults = []);
-                          },
-                        ),
-                    ],
+                        if (_searchController.text.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchResults = []);
+                            },
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // --- Sticky Filter Chips ---
-            Container(
-              height: 60,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: _filters.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = _filters[index];
-                  final isSelected = _selectedFilter == filter;
-                  return ChoiceChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => _selectedFilter = filter);
-                        if (_searchController.text.isNotEmpty) {
-                          _performSearch(_searchController.text);
+              // --- Sticky Filter Chips ---
+              Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _filters.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final filter = _filters[index];
+                    final isSelected = _selectedFilter == filter;
+                    return ChoiceChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _selectedFilter = filter);
+                          if (_searchController.text.isNotEmpty) {
+                            _performSearch(_searchController.text);
+                          }
                         }
-                      }
-                    },
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurface,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                    ),
-                  );
-                },
+                      },
+                      backgroundColor: Colors.transparent,
+                      selectedColor: isDark ? Colors.white : const Color(0xFF0F0F0F),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected
+                              ? (isDark ? Colors.white : const Color(0xFF0F0F0F))
+                              : (isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1)),
+                          width: 1.5,
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? (isDark ? const Color(0xFF0F0F0F) : Colors.white)
+                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                      showCheckmark: false,
+                    );
+                  },
+                ),
               ),
-            ),
 
-            const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
 
-            // --- Results / Recent Searches ---
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _searchController.text.isEmpty
-                  ? _buildRecentSearches()
-                  : _buildSearchResults(isTagalog),
-            ),
-          ],
+              // --- Results / Recent Searches ---
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _searchController.text.isEmpty
+                        ? _buildRecentSearches()
+                        : _buildSearchResults(isTagalog),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -345,17 +392,20 @@ class _SearchScreenState extends State<SearchScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Recent',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                'Recent Searches',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.4),
               ),
               TextButton(
                 onPressed: _clearRecentSearches,
-                child: const Text('Clear all'),
+                child: const Text(
+                  'Clear all',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -389,19 +439,20 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSearchResults(bool isTagalog) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_searchResults.isEmpty) {
       return _buildEmptyState(
         icon: Icons.search_off_rounded,
         title: 'No results',
-        subtitle:
-            'We couldn\'t find anything matching "${_searchController.text}"',
+        subtitle: 'We couldn\'t find anything matching "${_searchController.text}"',
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: _searchResults.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = _searchResults[index];
         final type = item['type'];
@@ -422,8 +473,7 @@ class _SearchScreenState extends State<SearchScreen> {
           icon = Icons.music_note_rounded;
         } else if (type == 'Center') {
           title = item['centername']?.toString() ?? 'Center';
-          subtitle =
-              '${item['centerdistrict'] ?? ''} • ${item['centeraddress'] ?? ''}';
+          subtitle = '${item['centerdistrict'] ?? ''} • ${item['centeraddress'] ?? ''}';
           icon = Icons.church_rounded;
         } else if (type == 'Bylaw') {
           title = 'Chapter ${item['chapters'] ?? ''}: ${item['title'] ?? ''}';
@@ -431,10 +481,11 @@ class _SearchScreenState extends State<SearchScreen> {
           icon = Icons.gavel_rounded;
         }
 
-        return Material(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
-          clipBehavior: Clip.antiAlias,
+        final leadingIconBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF);
+        final leadingIconBorder = isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05);
+
+        return ChatGPTCard(
+          borderRadius: 16,
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -443,10 +494,11 @@ class _SearchScreenState extends State<SearchScreen> {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                color: leadingIconBg,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: leadingIconBorder, width: 1.5),
               ),
-              child: Icon(icon, color: colorScheme.primary, size: 22),
+              child: Icon(icon, color: isDark ? Colors.white : const Color(0xFF0F0F0F), size: 20),
             ),
             title: Text(
               title,
@@ -464,7 +516,7 @@ class _SearchScreenState extends State<SearchScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -472,40 +524,7 @@ class _SearchScreenState extends State<SearchScreen> {
             trailing: type == 'Song'
                 ? ((item['chords'] != null &&
                         item['chords'].toString().trim().isNotEmpty)
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: colorScheme.primary.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.music_note_rounded,
-                              size: 12,
-                              color: colorScheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'CHORDS',
-                              style: TextStyle(
-                                color: colorScheme.onPrimaryContainer,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                    ? const ChatGPTTag(label: 'CHORDS', icon: Icons.music_note_rounded)
                     : null)
                 : Icon(
                     Icons.arrow_forward_ios_rounded,

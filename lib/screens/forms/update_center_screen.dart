@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../menu/profile_screen.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class UpdateCenterSheet extends StatefulWidget {
   final Map<String, dynamic> centerNode;
@@ -227,53 +228,12 @@ class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
     }
   }
 
-  Widget _buildModernField(
-    TextEditingController controller,
-    String label,
-    IconData icon,
-    ColorScheme colorScheme, {
-    bool isPhone = false,
-    String? helperText,
-    int maxLines = 1,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: controller,
-        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-        maxLines: maxLines,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
-          filled: true,
-          fillColor: colorScheme.surfaceContainerLow,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          helperText: helperText,
-          helperStyle: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            fontSize: 11,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.1);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -325,21 +285,30 @@ class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
             const SizedBox(height: 16),
 
             // ── Info banner ───────────────────────────────────────────────────
-            Container(
-              width: double.infinity,
+            ChatGPTCard(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'All suggestions are reviewed by the community before being applied.',
-                style: TextStyle(
-                  color: colorScheme.onPrimaryContainer,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
+              borderRadius: 12,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 20,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'All suggestions are reviewed by community/administrators before being applied to the database.',
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -358,17 +327,29 @@ class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _selectedType,
-              dropdownColor: colorScheme.surface,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              dropdownColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : Colors.black,
+              ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: colorScheme.surfaceContainerLow,
+                fillColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderColor, width: 1.5),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderColor, width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
+                  horizontal: 16,
                   vertical: 14,
                 ),
               ),
@@ -378,7 +359,7 @@ class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
                       value: type,
                       child: Text(
                         type,
-                        style: TextStyle(color: colorScheme.onSurface),
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black),
                       ),
                     ),
                   )
@@ -392,84 +373,64 @@ class _UpdateCenterSheetState extends State<UpdateCenterSheet> {
 
             // ── Fields ────────────────────────────────────────────────────────
             if (_selectedType == 'Location Locator') ...[
-              _buildModernField(
-                _latLngController,
-                'Latitude / Longitude',
-                Icons.explore_rounded,
-                colorScheme,
+              ChatGPTTextField(
+                controller: _latLngController,
+                label: 'Latitude / Longitude',
+                icon: Icons.explore_rounded,
               ),
-              _buildModernField(
-                _mapsLinkController,
-                'Google Maps Link',
-                Icons.link_rounded,
-                colorScheme,
+              ChatGPTTextField(
+                controller: _mapsLinkController,
+                label: 'Google Maps Link',
+                icon: Icons.link_rounded,
               ),
-              _buildModernField(
-                _locationNotesController,
-                'Additional Notes',
-                Icons.notes_rounded,
-                colorScheme,
+              ChatGPTTextField(
+                controller: _locationNotesController,
+                label: 'Additional Notes',
+                icon: Icons.notes_rounded,
                 maxLines: 3,
               ),
             ] else ...[
-              _buildModernField(
-                _nameController,
-                'Contact Name',
-                Icons.person_rounded,
-                colorScheme,
+              ChatGPTTextField(
+                controller: _nameController,
+                label: 'Contact Name',
+                icon: Icons.person_rounded,
               ),
-              _buildModernField(
-                _positionController,
-                'Role / Position',
-                Icons.badge_rounded,
-                colorScheme,
-                helperText: 'Example: Local President',
+              ChatGPTTextField(
+                controller: _positionController,
+                label: 'Role / Position',
+                hintText: 'Example: Local President',
+                icon: Icons.badge_rounded,
               ),
-              _buildModernField(
-                _contactNumberController,
-                'Contact Number',
-                Icons.phone_rounded,
-                colorScheme,
-                isPhone: true,
+              ChatGPTTextField(
+                controller: _contactNumberController,
+                label: 'Contact Number',
+                icon: Icons.phone_rounded,
+                keyboardType: TextInputType.phone,
               ),
-              _buildModernField(
-                _contactNotesController,
-                'Additional Notes',
-                Icons.notes_rounded,
-                colorScheme,
+              ChatGPTTextField(
+                controller: _contactNotesController,
+                label: 'Additional Notes',
+                icon: Icons.notes_rounded,
                 maxLines: 3,
               ),
             ],
 
             // ── Submit button ─────────────────────────────────────────────────
             const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _isSubmitting
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        ),
-                      ),
-                    )
-                  : FilledButton.icon(
-                      onPressed: _submitUpdate,
-                      // icon: const Icon(Icons.send_rounded, size: 16),
-                      label: const Text(
-                        'Submit Suggestion',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
+            ChatGPTButton(
+              onPressed: _isSubmitting ? null : _submitUpdate,
+              isLoading: _isSubmitting,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.send_rounded, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Submit Suggestion',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

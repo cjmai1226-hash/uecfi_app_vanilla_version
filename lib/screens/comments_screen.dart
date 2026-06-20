@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../providers/settings_provider.dart';
 import '../utils/color_utils.dart';
+import '../widgets/chatgpt_design_system.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final Map<String, dynamic> postNode;
@@ -212,8 +213,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                                       ],
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      data['content'] ?? '',
+                                    LinkifiedText(
+                                      text: data['content'] ?? '',
                                       style: TextStyle(
                                         fontSize: 15,
                                         color: textColor.withValues(alpha: 0.9),

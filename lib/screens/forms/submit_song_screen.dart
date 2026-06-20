@@ -5,6 +5,7 @@ import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ad_service.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class SubmitSongScreen extends StatefulWidget {
   const SubmitSongScreen({super.key});
@@ -91,98 +92,92 @@ class _SubmitSongScreenState extends State<SubmitSongScreen> {
     }
   }
 
-  Widget _buildModernField(
-    TextEditingController controller,
-    String label,
-    IconData icon,
-    ColorScheme colorScheme, {
-    int maxLines = 1,
-    bool useMonospace = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: useMonospace
-            ? GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w500)
-            : const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Icon(icon, color: colorScheme.primary, size: 22),
-          filled: true,
-          fillColor: colorScheme.surfaceContainerLow,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: MainAppBar(
+      appBar: const MainAppBar(
         title: 'Submit Song',
         showBackButton: true,
-        actions: [
-          _isSubmitting
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : IconButton.filledTonal(
-                  tooltip: 'Submit',
-                  icon: const Icon(Icons.check_rounded, size: 18),
-                  onPressed: _submitSong,
-                ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildModernField(_titleController, 'Song Title', Icons.music_note_rounded, colorScheme),
-                _buildModernField(_authorController, 'Author / Composer', Icons.person_rounded, colorScheme),
-                _buildModernField(_categoryController, 'Category (e.g. Worship)', Icons.category_rounded, colorScheme),
-                _buildModernField(
-                  _contentController,
-                  'Lyrics here...',
-                  Icons.text_fields_rounded,
-                  colorScheme,
-                  maxLines: 12,
-                  useMonospace: true,
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    'Note: Your submission will be reviewed by administrators before being added to the database.',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
+            ChatGPTTextField(
+              controller: _titleController,
+              label: 'Song Title',
+              icon: Icons.music_note_rounded,
+            ),
+            ChatGPTTextField(
+              controller: _authorController,
+              label: 'Author / Composer',
+              icon: Icons.person_rounded,
+            ),
+            ChatGPTTextField(
+              controller: _categoryController,
+              label: 'Category (e.g. Worship)',
+              icon: Icons.category_rounded,
+            ),
+            ChatGPTTextField(
+              controller: _contentController,
+              label: 'Lyrics',
+              hintText: 'Lyrics here...',
+              icon: Icons.text_fields_rounded,
+              maxLines: 12,
+              style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            ChatGPTCard(
+              padding: const EdgeInsets.all(16),
+              borderRadius: 12,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 20,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Note: Your submission will be reviewed by administrators before being added to the database.',
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            ChatGPTButton(
+              onPressed: _isSubmitting ? null : _submitSong,
+              isLoading: _isSubmitting,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Submit Song',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -182,12 +182,7 @@ class MenuScreen extends StatelessWidget {
                   size: 20,
                 ),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreatePostScreen(),
-                    ),
-                  );
+                  CreatePostScreen.show(context);
                 },
               ),
               ListTile(

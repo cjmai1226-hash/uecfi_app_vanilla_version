@@ -6,6 +6,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../widgets/chord_diagram.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class SongDetailScreen extends StatefulWidget {
   final Map<String, dynamic> song;
@@ -291,21 +292,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                 // Category & Meta Row
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        category.toString().toUpperCase(),
-                        style: TextStyle(
-                          color: colorScheme.onSecondaryContainer,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                    ChatGPTTag(
+                      label: category.toString().toUpperCase(),
+                      fontSize: 9,
                     ),
                     const SizedBox(width: 8),
                     if (author.toString() != 'N/A')
@@ -370,84 +359,102 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       bottomNavigationBar: _isProjectMode
           ? null
           : BottomAppBar(
-              elevation: 4,
-              shadowColor: Colors.black.withValues(alpha: 0.2),
+              elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  if (settings.showChords) ...[
-                    FilledButton.icon(
-                      onPressed: hasChords
-                          ? () {
-                              setState(() {
-                                _isChordsView = !_isChordsView;
-                                if (!_isChordsView) _transposeOffset = 0;
-                              });
-                            }
-                          : null,
-                      icon: Icon(
-                        _isChordsView
-                            ? Icons.notes_rounded
-                            : Icons.music_note_rounded,
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    if (settings.showChords) ...[
+                      FilledButton.icon(
+                        onPressed: hasChords
+                            ? () {
+                                setState(() {
+                                  _isChordsView = !_isChordsView;
+                                  if (!_isChordsView) _transposeOffset = 0;
+                                });
+                              }
+                            : null,
+                        icon: Icon(
+                          _isChordsView
+                              ? Icons.notes_rounded
+                              : Icons.music_note_rounded,
+                        ),
+                        label: Text(_isChordsView ? 'Lyrics' : 'Chords'),
+                        style: FilledButton.styleFrom(
+                          shape: const StadiumBorder(),
+                          backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
+                          foregroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white,
+                          disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                          disabledForegroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26,
+                        ),
                       ),
-                      label: Text(_isChordsView ? 'Lyrics' : 'Chords'),
-                      style: hasChords
-                          ? FilledButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: colorScheme.onPrimary,
-                            )
-                          : null,
+                    ],
+                    const Spacer(),
+                    IconButton(
+                      tooltip: isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
+                      icon: Icon(
+                        isBookmarked
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_add_outlined,
+                        color: isBookmarked ? (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white) : null,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: isBookmarked
+                            ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F))
+                            : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF)),
+                        foregroundColor: isBookmarked
+                            ? (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white)
+                            : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+                      ),
+                      onPressed: () {
+                        context.read<BookmarkProvider>().toggleBookmark(
+                              title.toString(),
+                            );
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isBookmarked
+                                  ? 'Removed Bookmark'
+                                  : 'Added to Bookmarks',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+
+                    IconButton(
+                      tooltip: 'Projector Mode',
+                      icon: const Icon(Icons.cast_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+                        foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                      ),
+                      onPressed: () => setState(() => _isProjectMode = true),
                     ),
                   ],
-                  const Spacer(),
-                  IconButton.filledTonal(
-                    tooltip: isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
-                    icon: Icon(
-                      isBookmarked
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_add_outlined,
-                      color: isBookmarked ? primaryColor : null,
-                    ),
-                    onPressed: () {
-                      context.read<BookmarkProvider>().toggleBookmark(
-                            title.toString(),
-                          );
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isBookmarked
-                                ? 'Removed Bookmark'
-                                : 'Added to Bookmarks',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filledTonal(
-                    tooltip: 'Song Details',
-                    icon: const Icon(Icons.info_outline_rounded),
-                    onPressed: () => _showSongInfoDialog(category, author),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filledTonal(
-                    tooltip: 'Projector Mode',
-                    icon: const Icon(Icons.cast_rounded),
-                    onPressed: () => setState(() => _isProjectMode = true),
-                  ),
-                ],
+                ),
               ),
             ),
       floatingActionButton: _isProjectMode
           ? FloatingActionButton.large(
               heroTag: 'song_project_exit',
-              backgroundColor: primaryColor,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
+              foregroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               onPressed: () => setState(() => _isProjectMode = false),
               child: const Icon(Icons.close_rounded),
@@ -457,67 +464,44 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   }
 
   Widget _buildCompactTransposeControl(ColorScheme colorScheme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton.filledTonal(
+        IconButton(
           visualDensity: VisualDensity.compact,
           icon: const Icon(Icons.remove_rounded, size: 16),
           onPressed: _transposeOffset > -6 ? () => setState(() => _transposeOffset--) : null,
+          style: IconButton.styleFrom(
+            backgroundColor: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+            foregroundColor: isDark ? Colors.white : Colors.black,
+            disabledBackgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            disabledForegroundColor: isDark ? Colors.white24 : Colors.black26,
+          ),
         ),
         SizedBox(
           width: 32,
           child: Center(
             child: Text(
               _transposeOffset > 0 ? '+$_transposeOffset' : '$_transposeOffset',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
           ),
         ),
-        IconButton.filledTonal(
+        IconButton(
           visualDensity: VisualDensity.compact,
           icon: const Icon(Icons.add_rounded, size: 16),
           onPressed: _transposeOffset < 6 ? () => setState(() => _transposeOffset++) : null,
-        ),
-      ],
-    );
-  }
-
-  void _showSongInfoDialog(dynamic category, dynamic author) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Song Info', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow('Category', category.toString()),
-            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider()),
-            _buildInfoRow('Composer', author.toString()),
-            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider()),
-            _buildInfoRow('Created', widget.song['dateCreated']?.toString() ?? 'N/A'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+          style: IconButton.styleFrom(
+            backgroundColor: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+            foregroundColor: isDark ? Colors.white : Colors.black,
+            disabledBackgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            disabledForegroundColor: isDark ? Colors.white24 : Colors.black26,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        ),
       ],
     );
   }
+
+
 }

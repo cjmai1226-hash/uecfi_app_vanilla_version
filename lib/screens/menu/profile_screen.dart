@@ -4,8 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
-import '../../utils/color_utils.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 import 'recover_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -243,6 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
     final completion = _calculateCompletion(settings);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -283,89 +284,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Column(
           children: [
-            const SizedBox(height: 32),
             _buildProfileHeader(context, settings, colorScheme),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Member ID Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: colorScheme.secondary.withValues(alpha: 0.1),
+            ChatGPTCard(
+              borderRadius: 12.0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.badge_rounded,
+                        color: isDark ? Colors.white : Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MEMBER DIGITAL ID',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            settings.userId,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: settings.userId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Member ID copied to clipboard'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy_rounded,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        size: 18,
+                      ),
+                      tooltip: 'Copy ID',
+                    ),
+                  ],
                 ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.secondary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.badge_rounded,
-                      color: colorScheme.secondary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'MEMBER DIGITAL ID',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: colorScheme.secondary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        Text(
-                          settings.userId,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: colorScheme.onSecondaryContainer,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: settings.userId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Member ID copied to clipboard'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      Icons.copy_rounded,
-                      color: colorScheme.secondary,
-                      size: 20,
-                    ),
-                    tooltip: 'Copy ID',
-                  ),
-                ],
               ),
             ),
 
             const SizedBox(height: 24),
-            if (!_isEditing && completion < 1.0)
+            if (!_isEditing && completion < 1.0) ...[
               _buildCompletionCard(context, completion, colorScheme),
-            const SizedBox(height: 16),
+              const SizedBox(height: 24),
+            ],
             _buildCardSection(
               context,
               'Contact Information',
@@ -382,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _buildCardSection(
               context,
               'Personal Details',
@@ -410,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _buildCardSection(
               context,
               'Church Information',
@@ -480,50 +477,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildRecoverCard(ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.05)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Icon(Icons.history_rounded, size: 32, color: colorScheme.primary),
-          const SizedBox(height: 16),
-          const Text(
-            'Moving to a new device?',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ChatGPTCard(
+      borderRadius: 12.0,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.history_rounded,
+              size: 28,
+              color: isDark ? Colors.white : Colors.black,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You can recover your previous profile settings from the cloud.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-              height: 1.4,
+            const SizedBox(height: 12),
+            const Text(
+              'Moving to a new device?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RecoverProfileScreen(),
-                ),
-              ).then((_) => _refreshControllers());
-            },
-            icon: const Icon(Icons.restore_page_rounded, size: 20),
-            label: const Text('Recover Profile'),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'You can recover your previous profile settings from the cloud.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ChatGPTButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RecoverProfileScreen(),
+                  ),
+                ).then((_) => _refreshControllers());
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.restore_page_rounded, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Recover Profile',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -533,13 +541,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SettingsProvider settings,
     ColorScheme colorScheme,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final String nickname = _isEditing
         ? _nicknameController.text
         : settings.nickname;
     final String initial = nickname.isNotEmpty
         ? nickname[0].toUpperCase()
         : '?';
-    final Color avatarColor = ColorUtils.getAvatarColor(nickname);
 
     return Column(
       children: [
@@ -547,7 +555,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           radius: 60,
           backgroundColor: nickname == 'DEVELOPER'
               ? Colors.amber.shade700
-              : avatarColor,
+              : (isDark ? Colors.white : const Color(0xFF0F0F0F)),
           child: nickname == 'DEVELOPER'
               ? const Icon(
                   Icons.verified_rounded,
@@ -556,10 +564,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               : Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 48,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
                   ),
                 ),
         ),
@@ -579,8 +587,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               decoration: InputDecoration(
                 hintText: 'Enter Nickname',
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorScheme.primary),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black26),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: isDark ? Colors.white : Colors.black, width: 2),
                 ),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -614,51 +625,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
     double percentage,
     ColorScheme colorScheme,
   ) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(
-          color: colorScheme.primary.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      color: colorScheme.primary.withValues(alpha: 0.05),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ChatGPTCard(
+      borderRadius: 12.0,
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.stars_rounded, color: colorScheme.primary, size: 24),
+                Icon(
+                  Icons.stars_rounded,
+                  color: isDark ? Colors.white : Colors.black,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
                     'Complete your profile',
                     style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
                       letterSpacing: -0.2,
                     ),
                   ),
                 ),
                 Text(
                   '${(percentage * 100).toInt()}%',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.primary,
-                    fontSize: 16,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             LinearProgressIndicator(
               value: percentage,
-              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+              backgroundColor: isDark ? Colors.white12 : Colors.black12,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isDark ? Colors.white : Colors.black,
+              ),
               borderRadius: BorderRadius.circular(8),
-              minHeight: 12,
+              minHeight: 8,
             ),
             const SizedBox(height: 12),
             Text(
@@ -681,6 +691,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     List<Widget> tiles,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     List<Widget> children = [];
     for (int i = 0; i < tiles.length; i++) {
@@ -689,8 +700,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children.add(
           Divider(
             height: 1,
-            indent: 68,
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            indent: 52,
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
           ),
         );
       }
@@ -700,22 +711,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+          padding: const EdgeInsets.only(left: 8, bottom: 12, top: 12),
           child: Text(
-            title,
+            title.toUpperCase(),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: colorScheme.primary,
-              letterSpacing: 0.1,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+              letterSpacing: 1.5,
             ),
           ),
         ),
-        Material(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(28),
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: children),
+        ChatGPTCard(
+          borderRadius: 12.0,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(children: children),
+          ),
         ),
       ],
     );
@@ -732,27 +744,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     int maxLines = 1,
     bool readOnly = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     final displayValue = value.isEmpty ? 'Click the edit button to add' : value;
     final isPlaceholder = value.isEmpty;
 
     if (_isEditing) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          readOnly: readOnly,
-          onTap: onTap,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          decoration: InputDecoration(
-            labelText: label,
-            prefixIcon: Icon(icon, size: 20, color: colorScheme.primary),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 12,
+      return ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: isDark ? Colors.white70 : Colors.black54,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            letterSpacing: 0.5,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            readOnly: readOnly,
+            onTap: onTap,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter $label',
+              hintStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              ),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
             ),
           ),
         ),
@@ -765,33 +808,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isPlaceholder
-              ? colorScheme.surfaceContainerHighest
-              : colorScheme.primaryContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
+          color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEFEFEF),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
           color: isPlaceholder
-              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-              : colorScheme.primary,
-          size: 22,
+              ? (isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3))
+              : (isDark ? Colors.white : Colors.black),
+          size: 20,
         ),
       ),
       title: Text(
-        label,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          letterSpacing: 0.5,
+        ),
       ),
       subtitle: Text(
         displayValue,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
           color: isPlaceholder
               ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-              : colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w400,
+              : colorScheme.onSurface,
+          height: 1.4,
         ),
       ),
+      trailing: onTap != null
+          ? Icon(
+              Icons.open_in_new_rounded,
+              size: 18,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+            )
+          : null,
     );
   }
 }

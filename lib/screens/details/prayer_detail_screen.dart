@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/main_app_bar.dart';
+import '../../widgets/chatgpt_design_system.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prayer;
@@ -112,7 +113,6 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
     final colorScheme = Theme.of(context).colorScheme;
     final textColor = colorScheme.onSurface;
-    final primaryColor = colorScheme.primary;
 
     return Scaffold(
       appBar: _isProjectMode
@@ -140,24 +140,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
             children: [
               if (!_isProjectMode) ...[
                 // Category Tag
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  child: Text(
-                    category.toString().toUpperCase(),
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                ChatGPTTag(
+                  label: category.toString().toUpperCase(),
                 ),
                 const SizedBox(height: 16),
                 // Title
@@ -195,51 +179,70 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       bottomNavigationBar: _isProjectMode || !_hasList
           ? null
           : BottomAppBar(
-              elevation: 4,
-              shadowColor: Colors.black.withValues(alpha: 0.2),
+              elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // Previous Button
-                  FilledButton.tonalIcon(
-                    onPressed: _hasPrevious ? _goToPrevious : null,
-                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                    label: const Text('Previous'),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                      width: 1,
                     ),
                   ),
-                  const Spacer(),
-                  // Counter
-                  Text(
-                    '${_currentIndex + 1} / ${widget.allPrayers!.length}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurfaceVariant,
+                ),
+                child: Row(
+                  children: [
+                    // Previous Button
+                    OutlinedButton.icon(
+                      onPressed: _hasPrevious ? _goToPrevious : null,
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: const Text('Previous'),
+                      style: OutlinedButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        side: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black12,
+                        ),
+                        foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                        disabledForegroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  // Next Button
-                  FilledButton.icon(
-                    onPressed: _hasNext ? _goToNext : null,
-                    label: const Text('Next'),
-                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                    iconAlignment: IconAlignment.end,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: colorScheme.onPrimary,
-                      visualDensity: VisualDensity.compact,
+                    const Spacer(),
+                    // Counter
+                    Text(
+                      '${_currentIndex + 1} / ${widget.allPrayers!.length}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      ),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    // Next Button
+                    FilledButton.icon(
+                      onPressed: _hasNext ? _goToNext : null,
+                      label: const Text('Next'),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      iconAlignment: IconAlignment.end,
+                      style: FilledButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
+                        foregroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white,
+                        disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                        disabledForegroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
       floatingActionButton: _isProjectMode
           ? FloatingActionButton.large(
               heroTag: 'prayer_project_exit',
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
+              foregroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),

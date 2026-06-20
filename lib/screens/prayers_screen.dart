@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import 'details/prayer_detail_screen.dart';
 import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
+import '../widgets/chatgpt_design_system.dart';
 
 class PrayersScreen extends StatelessWidget {
   const PrayersScreen({super.key, this.onOpenDrawer});
@@ -79,33 +80,30 @@ class PrayersScreen extends StatelessWidget {
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Material(
-                            color: colorScheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(24),
-                            clipBehavior: Clip.antiAlias,
+                          child: ChatGPTCard(
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 8,
+                                vertical: 6,
                               ),
                               title: Text(
                                 title.toString(),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   fontSize: 16,
-                                  letterSpacing: -0.5,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
                               subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 2),
+                                padding: const EdgeInsets.only(top: 4),
                                 child: Text(
                                   content.toString(),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
