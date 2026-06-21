@@ -9,10 +9,12 @@ import 'theme/app_theme.dart';
 import 'providers/settings_provider.dart';
 import 'providers/bookmark_provider.dart';
 import 'services/ad_service.dart';
+import 'services/notification_service.dart';
 import 'screens/onboarding/welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
 
   // Handle Edge-to-Edge for Android 15+
   if (Platform.isAndroid) {

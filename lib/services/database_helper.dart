@@ -228,4 +228,61 @@ class DatabaseHelper {
     return allResults;
   }
 
+  Future<List<Map<String, dynamic>>> getBibleBooks() async {
+    final db = await database;
+    try {
+      return await db.rawQuery(
+        'SELECT book_id, book_name, MIN(rowid) as min_rowid FROM ILODOR GROUP BY book_id ORDER BY min_rowid;',
+      );
+    } catch (e) {
+      debugPrint("Error fetching Bible books: $e");
+      return [];
+    }
+  }
+
+  Future<List<int>> getChaptersForBook(String bookId) async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> results = await db.rawQuery(
+        'SELECT DISTINCT chapter FROM ILODOR WHERE book_id = ? ORDER BY chapter ASC;',
+        [bookId],
+      );
+      return results.map((row) => row['chapter'] as int).toList();
+    } catch (e) {
+      debugPrint("Error fetching chapters for book $bookId: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>> > getVerses(String bookId, int chapter) async {
+    final db = await database;
+    try {
+      return await db.query(
+        'ILODOR',
+        where: 'book_id = ? AND chapter = ?',
+        whereArgs: [bookId, chapter],
+        orderBy: 'verse ASC',
+      );
+    } catch (e) {
+      debugPrint("Error fetching verses for book $bookId, chapter $chapter: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> searchBible(String query) async {
+    final db = await database;
+    try {
+      return await db.query(
+        'ILODOR',
+        where: 'text LIKE ? OR book_name LIKE ?',
+        whereArgs: ['%$query%', '%$query%'],
+        orderBy: 'rowid ASC',
+        limit: 150,
+      );
+    } catch (e) {
+      debugPrint("Error searching Bible: $e");
+      return [];
+    }
+  }
 }
+

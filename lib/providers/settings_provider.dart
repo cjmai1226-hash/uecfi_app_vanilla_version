@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 
 class SettingsProvider with ChangeNotifier {
   String _themeModeStr = 'System';
@@ -22,6 +23,7 @@ class SettingsProvider with ChangeNotifier {
   String _centerName = '';
   String _centerAddress = '';
   bool _hasAcceptedTerms = false;
+  bool _remindersEnabled = true;
 
 
   String get themeModeLabel => _themeModeStr;
@@ -50,6 +52,7 @@ class SettingsProvider with ChangeNotifier {
   String get centerName => _centerName;
   String get centerAddress => _centerAddress;
   bool get hasAcceptedTerms => _hasAcceptedTerms;
+  bool get remindersEnabled => _remindersEnabled;
 
   bool get isProfileSetup =>
       _nickname != 'User' &&
@@ -88,6 +91,12 @@ class SettingsProvider with ChangeNotifier {
     _centerName = prefs.getString('centerName') ?? '';
     _centerAddress = prefs.getString('centerAddress') ?? '';
     _hasAcceptedTerms = prefs.getBool('hasAcceptedTerms') ?? false;
+    _remindersEnabled = prefs.getBool('remindersEnabled') ?? true;
+    if (_remindersEnabled) {
+      NotificationService().scheduleDailyPrayerReminder();
+      NotificationService().scheduleMorningReminder();
+      NotificationService().scheduleSundayReminder();
+    }
 
     if (_userId.isEmpty) {
       const numbers = '0123456789';
@@ -126,6 +135,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('colorSeed', color.toARGB32());
+  }
+
+  void toggleShowChordsAndShapes(bool value) async {
+    _showChords = value;
+    _showChordShapes = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('showChords', value);
+    prefs.setBool('showChordShapes', value);
   }
 
   void toggleShowChords(bool value) async {
@@ -239,4 +257,21 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('hasAcceptedTerms', value);
   }
+
+  void toggleReminders(bool value) async {
+    _remindersEnabled = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('remindersEnabled', value);
+    if (value) {
+      await NotificationService().scheduleDailyPrayerReminder();
+      await NotificationService().scheduleMorningReminder();
+      await NotificationService().scheduleSundayReminder();
+    } else {
+      await NotificationService().cancelDailyPrayerReminder();
+      await NotificationService().cancelMorningReminder();
+      await NotificationService().cancelSundayReminder();
+    }
+  }
 }
+

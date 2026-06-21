@@ -5,6 +5,7 @@ import '../providers/settings_provider.dart';
 import '../screens/menu/profile_screen.dart';
 import '../screens/menu/settings_screen.dart';
 import '../screens/menu/bookmarks_screen.dart';
+import '../screens/menu/bible_screen.dart';
 import '../screens/forms/submit_song_screen.dart';
 import '../screens/menu/help_feedback_screen.dart';
 import '../screens/menu/bylaws_screen.dart';
@@ -70,16 +71,16 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   _buildProfileHeader(context, settings, colorScheme),
                   const SizedBox(height: 16),
-                  _buildSectionLabel(context, 'Tools & Content'),
+                  _buildSectionLabel(context, 'Scripture & Bylaws'),
                   _DrawerTile(
-                    icon: Icons.bookmarks_outlined,
-                    label: 'Bookmarks',
+                    icon: Icons.menu_book_rounded,
+                    label: 'Ilocano Bible',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const BookmarksScreen(),
+                          builder: (_) => const BibleScreen(),
                         ),
                       );
                     },
@@ -93,6 +94,20 @@ class AppDrawer extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const BylawsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSectionLabel(context, 'Tools & Content'),
+                  _DrawerTile(
+                    icon: Icons.bookmarks_outlined,
+                    label: 'Bookmarks',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BookmarksScreen(),
                         ),
                       );
                     },

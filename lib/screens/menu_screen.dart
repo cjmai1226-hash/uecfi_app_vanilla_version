@@ -7,8 +7,8 @@ import 'menu/settings_screen.dart'; // import the new settings screen
 import 'menu/bookmarks_screen.dart';
 import 'menu/profile_screen.dart';
 import 'menu/bylaws_screen.dart';
+import 'menu/bible_screen.dart';
 import 'menu/centers_screen.dart';
-import 'forms/create_post_screen.dart';
 import 'forms/submit_song_screen.dart';
 import 'menu/contact_us_screen.dart';
 import 'menu/terms_agreements_screen.dart';
@@ -98,6 +98,57 @@ class MenuScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
+          // Scripture & Bylaws section header
+          _buildSectionHeader('Scripture & Bylaws', primaryColor),
+          const SizedBox(height: 8),
+          _buildFormGroup(
+            context: context,
+            surfaceColor: surfaceColor,
+            children: [
+              ListTile(
+                leading: Icon(Icons.menu_book_rounded, color: primaryColor),
+                title: Text(
+                  'Ilocano Bible',
+                  style: TextStyle(color: textColor, fontSize: 16),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BibleScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.gavel_outlined, color: primaryColor),
+                title: Text(
+                  'Church Bylaws',
+                  style: TextStyle(color: textColor, fontSize: 16),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BylawsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
           _buildFormGroup(
             context: context,
             surfaceColor: surfaceColor,
@@ -142,26 +193,6 @@ class MenuScreen extends StatelessWidget {
                   );
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.gavel_outlined, color: textColor),
-                title: Text(
-                  'ByLaws',
-                  style: TextStyle(color: textColor, fontSize: 16),
-                ),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey,
-                  size: 20,
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BylawsScreen(),
-                    ),
-                  );
-                },
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -170,21 +201,6 @@ class MenuScreen extends StatelessWidget {
             context: context,
             surfaceColor: surfaceColor,
             children: [
-              ListTile(
-                leading: Icon(Icons.post_add_outlined, color: textColor),
-                title: Text(
-                  'Create Post',
-                  style: TextStyle(color: textColor, fontSize: 16),
-                ),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey,
-                  size: 20,
-                ),
-                onTap: () {
-                  CreatePostScreen.show(context);
-                },
-              ),
               ListTile(
                 leading: Icon(Icons.queue_music_outlined, color: textColor),
                 title: Text(
@@ -304,6 +320,21 @@ class MenuScreen extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 2),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+          letterSpacing: 1.5,
+        ),
       ),
     );
   }

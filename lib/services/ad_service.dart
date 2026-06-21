@@ -6,12 +6,10 @@ import 'dart:io';
 class AdService {
   static final AdService _instance = AdService._internal();
 
-  factory AdService() {
-    return _instance;
-  }
-
+  factory AdService() => _instance;
   AdService._internal();
 
+  // ─── Production Ad Unit IDs ───────────────────────────────────────────────
   static const String _appOpenAdUnitId =
       'ca-app-pub-8333503696162383/8257320695';
   static const String _bannerAdUnitId =
@@ -19,8 +17,9 @@ class AdService {
   static const String _interstitialAdUnitId =
       'ca-app-pub-8333503696162383/4788848973';
   static const String _rewardedAdUnitId =
-      'ca-app-pub-8333503696162383/2814402267'; // Replace
+      'ca-app-pub-3940256099942544/5224354917';
 
+  // ─── Test Ad Unit IDs ─────────────────────────────────────────────────────
   static const String _testAppOpenAndroidId =
       'ca-app-pub-3940256099942544/9257395921';
   static const String _testAppOpenIOSId =
@@ -41,49 +40,53 @@ class AdService {
   static const String _testRewardedIOSId =
       'ca-app-pub-3940256099942544/1712485313';
 
+  // ─── State ────────────────────────────────────────────────────────────────
   AppOpenAd? _appOpenAd;
   InterstitialAd? _interstitialAd;
-  int _interstitialClickCount = 0;
-  
+  bool _isInterstitialLoading = false;
+
+  /// Timestamp of the last interstitial impression. Used to enforce the
+  /// Google AdMob policy minimum gap between interstitials (~60 seconds).
+  DateTime? _lastInterstitialShown;
+  static const Duration _minInterstitialInterval = Duration(seconds: 60);
+
   bool get isSupportedPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  // ─── Initialisation ───────────────────────────────────────────────────────
 
   Future<void> initializeMobileAds() async {
     if (!isSupportedPlatform) return;
     await MobileAds.instance.initialize();
-    debugPrint('AdMob initialized successfully');
+    debugPrint('AdMob: initialized');
+    // Pre-load an interstitial immediately so it is ready for the first
+    // natural transition.
+    _loadInterstitialAd();
   }
 
-  String get _appOpenId {
-    if (kDebugMode) {
-      return Platform.isIOS ? _testAppOpenIOSId : _testAppOpenAndroidId;
-    }
-    return _appOpenAdUnitId;
-  }
+  // ─── ID helpers ───────────────────────────────────────────────────────────
 
-  String getBannerAdUnitId() {
-    if (kDebugMode) {
-      return Platform.isIOS ? _testBannerIOSId : _testBannerAndroidId;
-    }
-    return _bannerAdUnitId;
-  }
+  String get _appOpenId =>
+      kDebugMode
+          ? (Platform.isIOS ? _testAppOpenIOSId : _testAppOpenAndroidId)
+          : _appOpenAdUnitId;
 
-  String get _interstitialId {
-    if (kDebugMode) {
-      return Platform.isIOS
-          ? _testInterstitialIOSId
-          : _testInterstitialAndroidId;
-    }
-    return _interstitialAdUnitId;
-  }
+  String getBannerAdUnitId() =>
+      kDebugMode
+          ? (Platform.isIOS ? _testBannerIOSId : _testBannerAndroidId)
+          : _bannerAdUnitId;
 
-  String get _rewardedId {
-    if (kDebugMode) {
-      return Platform.isIOS ? _testRewardedIOSId : _testRewardedAndroidId;
-    }
-    return _rewardedAdUnitId;
-  }
+  String get _interstitialId =>
+      kDebugMode
+          ? (Platform.isIOS ? _testInterstitialIOSId : _testInterstitialAndroidId)
+          : _interstitialAdUnitId;
 
-  // AppOpen Ad for Cold Start
+  String get _rewardedId =>
+      kDebugMode
+          ? (Platform.isIOS ? _testRewardedIOSId : _testRewardedAndroidId)
+          : _rewardedAdUnitId;
+
+  // ─── App Open Ad ──────────────────────────────────────────────────────────
+
   void loadAndShowAppOpenAd() {
     if (!isSupportedPlatform) return;
     AppOpenAd.load(
@@ -91,45 +94,96 @@ class AdService {
       request: const AdRequest(),
       adLoadCallback: AppOpenAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('AppOpen ad loaded and showing');
+          debugPrint('AdMob: AppOpen ad loaded');
           _appOpenAd = ad;
           _appOpenAd!.show();
         },
         onAdFailedToLoad: (error) {
-          debugPrint('AppOpen ad failed to load: $error');
+          debugPrint('AdMob: AppOpen ad failed to load — $error');
         },
       ),
     );
   }
 
-  // Interstitial Ad
-  void showInterstitialAd({bool requireCounter = false}) {
+  // ─── Interstitial Ad ──────────────────────────────────────────────────────
+
+  /// Pre-loads the next interstitial in the background so it is ready
+  /// instantly for the next natural transition.
+  void _loadInterstitialAd() {
     if (!isSupportedPlatform) return;
-    if (requireCounter) {
-      _interstitialClickCount++;
-      // Show ad every 3 clicks
-      if (_interstitialClickCount % 3 != 0) {
-        return;
-      }
-    }
+    if (_isInterstitialLoading) return; // prevent duplicate loads
+    _isInterstitialLoading = true;
 
     InterstitialAd.load(
       adUnitId: _interstitialId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('Interstitial ad loaded and showing');
+          _isInterstitialLoading = false;
           _interstitialAd = ad;
-          _interstitialAd!.show();
+          debugPrint('AdMob: Interstitial pre-loaded ✓');
+
+          // Auto-reload once the ad is dismissed or fails to show so there
+          // is always a fresh ad in the buffer.
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdShowedFullScreenContent: (ad) {
+              debugPrint('AdMob: Interstitial shown');
+              _lastInterstitialShown = DateTime.now();
+            },
+            onAdDismissedFullScreenContent: (ad) {
+              debugPrint('AdMob: Interstitial dismissed — reloading');
+              ad.dispose();
+              _interstitialAd = null;
+              _loadInterstitialAd(); // Reload for the next opportunity
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              debugPrint('AdMob: Interstitial failed to show — $error');
+              ad.dispose();
+              _interstitialAd = null;
+              _loadInterstitialAd();
+            },
+          );
         },
         onAdFailedToLoad: (error) {
-          debugPrint('Interstitial ad failed to load: $error');
+          _isInterstitialLoading = false;
+          debugPrint('AdMob: Interstitial failed to load — $error');
+          // Retry after a delay to avoid hammering the network
+          Future.delayed(const Duration(seconds: 30), _loadInterstitialAd);
         },
       ),
     );
   }
 
-  // Rewarded Ad with fallback
+  /// Shows the pre-loaded interstitial if:
+  ///   • A loaded ad is available
+  ///   • At least [_minInterstitialInterval] has elapsed since the last impression
+  ///
+  /// Call this at **natural screen transitions only** (e.g. opening a song
+  /// detail, navigating a Bible chapter, or switching a main tab) to comply
+  /// with Google AdMob policy.
+  ///
+  /// Returns `true` if an ad was shown.
+  bool showInterstitialIfReady() {
+    if (!isSupportedPlatform) return false;
+    if (_interstitialAd == null) {
+      debugPrint('AdMob: Interstitial not ready yet');
+      return false;
+    }
+
+    final now = DateTime.now();
+    if (_lastInterstitialShown != null &&
+        now.difference(_lastInterstitialShown!) < _minInterstitialInterval) {
+      debugPrint('AdMob: Interstitial cooldown active — skipping');
+      return false;
+    }
+
+    _interstitialAd!.show();
+    _interstitialAd = null; // Will be replaced via fullScreenContentCallback
+    return true;
+  }
+
+  // ─── Rewarded Ad ──────────────────────────────────────────────────────────
+
   Future<void> showRewardedAdDialog({
     required BuildContext context,
     required VoidCallback onReward,
@@ -148,9 +202,7 @@ class AdService {
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext); // dismiss without reward
-            },
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -177,7 +229,7 @@ class AdService {
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
-          Navigator.pop(context); // hide loading
+          Navigator.pop(context);
           ad.show(
             onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
               onReward();
@@ -185,22 +237,26 @@ class AdService {
           );
         },
         onAdFailedToLoad: (error) {
-          Navigator.pop(context); // hide loading
-          debugPrint('Rewarded ad failed to load: $error');
+          Navigator.pop(context);
+          debugPrint('AdMob: Rewarded ad failed to load — $error');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Could not load ad. Proceeding...')),
           );
-          onReward(); // Fallback to proceed if it simply fails
+          onReward();
         },
       ),
     );
   }
+
+  // ─── Dispose ──────────────────────────────────────────────────────────────
 
   void dispose() {
     _appOpenAd?.dispose();
     _interstitialAd?.dispose();
   }
 }
+
+// ─── Banner Ad Widget ─────────────────────────────────────────────────────────
 
 class AdBannerWidget extends StatefulWidget {
   final double height;
@@ -231,18 +287,14 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           if (mounted) {
-            setState(() {
-              _isAdLoaded = true;
-            });
+            setState(() => _isAdLoaded = true);
           }
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('Banner ad failed to load: $error');
+          debugPrint('AdMob: Banner failed to load — $error');
           ad.dispose();
           if (mounted) {
-            setState(() {
-              _isAdLoaded = false;
-            });
+            setState(() => _isAdLoaded = false);
           }
         },
       ),
@@ -279,11 +331,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
               right: -8,
               top: -8,
               child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isClosed = true;
-                  });
-                },
+                onTap: () => setState(() => _isClosed = true),
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -305,4 +353,3 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     );
   }
 }
-

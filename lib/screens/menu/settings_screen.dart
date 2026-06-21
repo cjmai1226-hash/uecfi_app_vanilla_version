@@ -18,14 +18,6 @@ class SettingsScreen extends StatelessWidget {
     'Orange': Colors.orange,
   };
 
-  // ── Font size options ────────────────────────────────────────────────────────
-  static const Map<String, double> _fontSizes = {
-    'Small': 14.0,
-    'Medium': 16.0,
-    'Large': 18.0,
-    'Extra Large': 20.0,
-  };
-
   String _colorName(Color color) {
     for (final e in _accentColors.entries) {
       if (e.value.toARGB32() == color.toARGB32()) return e.key;
@@ -34,10 +26,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   String _fontSizeName(double size) {
-    for (final e in _fontSizes.entries) {
-      if (e.value == size) return e.key;
-    }
-    return 'Medium';
+    return '${size.round()}';
   }
 
   // ── Generic options bottom sheet ─────────────────────────────────────────────
@@ -125,6 +114,102 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // ── Font size bottom sheet ──────────────────────────────────────────────────
+  void _showFontSizeSheet(BuildContext context, SettingsProvider settings) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF171717) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx2, setModalState) {
+            final currentSize = settings.fontSize;
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'ADJUST FONT SIZE',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Text(
+                          'A',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: currentSize.clamp(14.0, 26.0),
+                            min: 14.0,
+                            max: 26.0,
+                            divisions: 12,
+                            label: _fontSizeName(currentSize),
+                            onChanged: (value) {
+                              context.read<SettingsProvider>().updateFontSize(value);
+                              setModalState(() {});
+                            },
+                          ),
+                        ),
+                        Text(
+                          'A',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Preview text (${_fontSizeName(currentSize)})',
+                        style: TextStyle(
+                          fontSize: currentSize,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -288,13 +373,7 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Font Size',
                 subtitle: fontSizeName,
                 colorScheme: colorScheme,
-                onTap: () => _showOptionsSheet(
-                  context,
-                  title: 'Font Size',
-                  items: const ['Small', 'Medium', 'Large', 'Extra Large'],
-                  selected: fontSizeName,
-                  onSelected: (v) => context.read<SettingsProvider>().updateFontSize(_fontSizes[v]!),
-                ),
+                onTap: () => _showFontSizeSheet(context, settings),
               ),
             ],
           ),
@@ -306,6 +385,19 @@ class SettingsScreen extends StatelessWidget {
           _buildCard(
             context,
             children: [
+              _buildSwitchTile(
+                context,
+                icon: Icons.notifications_active_outlined,
+                title: 'Prayer & Worship Reminders',
+                colorScheme: colorScheme,
+                value: settings.remindersEnabled,
+                seedColor: settings.colorSeed,
+                onChanged: (val) {
+                  context.read<SettingsProvider>().toggleReminders(val);
+                },
+              ),
+              _buildDivider(colorScheme),
+
               _buildChevronTile(
                 context,
                 icon: Icons.language_rounded,
@@ -324,7 +416,8 @@ class SettingsScreen extends StatelessWidget {
               _buildSwitchTile(
                 context,
                 icon: Icons.music_note_outlined,
-                title: 'Show Chords',
+                title: 'Show Chords & Shapes',
+                subtitle: 'Displays chord names and diagrams on songs',
                 colorScheme: colorScheme,
                 value: settings.showChords,
                 seedColor: settings.colorSeed,
@@ -332,35 +425,13 @@ class SettingsScreen extends StatelessWidget {
                   if (val) {
                     AdService().showRewardedAdDialog(
                       context: context,
-                      title: 'Enable Show Chords',
+                      title: 'Enable Chords & Shapes',
                       content: 'Watch a short ad to unlock chord views?',
-                      onReward: () => context.read<SettingsProvider>().toggleShowChords(true),
+                      onReward: () => context.read<SettingsProvider>().toggleShowChordsAndShapes(true),
                     );
                   } else {
-                    context.read<SettingsProvider>().toggleShowChords(false);
+                    context.read<SettingsProvider>().toggleShowChordsAndShapes(false);
                   }
-                },
-              ),
-              _buildDivider(colorScheme),
-              _buildSwitchTile(
-                context,
-                icon: Icons.grid_view_rounded,
-                title: 'Chord Shapes',
-                colorScheme: colorScheme,
-                value: settings.showChordShapes,
-                seedColor: settings.colorSeed,
-                isEnabled: settings.showChords,
-                onChanged: (val) {
-                  if (!settings.showChords) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enable Show Chords first'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    return;
-                  }
-                  context.read<SettingsProvider>().toggleShowChordShapes(val);
                 },
               ),
               _buildDivider(colorScheme),
@@ -487,6 +558,7 @@ class SettingsScreen extends StatelessWidget {
     required ColorScheme colorScheme,
     required Color seedColor,
     bool isEnabled = true,
+    String? subtitle,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
@@ -517,6 +589,16 @@ class SettingsScreen extends StatelessWidget {
               : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          : null,
       trailing: Switch.adaptive(
         value: value,
         activeTrackColor: seedColor,

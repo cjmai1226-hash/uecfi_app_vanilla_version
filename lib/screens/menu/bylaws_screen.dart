@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../services/database_helper.dart';
 import '../../widgets/main_app_bar.dart';
 import '../details/bylaw_detail_screen.dart';
-import '../../services/ad_service.dart';
 import '../../widgets/chatgpt_design_system.dart';
 
 class BylawsScreen extends StatefulWidget {
@@ -158,9 +157,6 @@ class _BylawsScreenState extends State<BylawsScreen> {
                       ),
           ),
         ],
-      ),
-      bottomNavigationBar: const SafeArea(
-        child: AdBannerWidget(),
       ),
     );
   }

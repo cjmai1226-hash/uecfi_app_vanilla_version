@@ -7,11 +7,12 @@ import '../providers/settings_provider.dart';
 import '../services/ad_service.dart';
 import 'comments_screen.dart';
 import 'forms/create_post_screen.dart';
-import 'search_screen.dart';
 import 'menu/profile_screen.dart';
+import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
 import '../widgets/chatgpt_design_system.dart';
 import '../utils/color_utils.dart';
+import 'menu/bible_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onOpenDrawer});
@@ -23,6 +24,76 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentTipIndex = 0;
+
+  static const String _bibleActionLabel = 'click here!';
+
+  final List<String> _quickTips = [
+    "Do you know the UECFI App now has an Ilocano Bible added to it? You can find it at the App Drawer or ",
+    "Do you know that the UECFI App can help you learn to play a guitar and ukulele? Just activate it in the Settings, enable 'Show Chords & Shapes', and choose which chord instrument you want to play!",
+    "Do you know you can submit your created songs in the UECFI App? Just go to the App Drawer and tap 'Submit Song'!",
+    "Do you know you can contribute to your own local church by properly mapping it and adding a contact person to help other brothers and sisters in case of a spiritual mission? Just choose your local center and press Suggest Edit!",
+  ];
+
+  /// Parallel list: if non-null, the tip gets a tappable 'click here' label appended.
+  late final List<VoidCallback?> _quickTipActions;
+
+  @override
+  void initState() {
+    super.initState();
+    _quickTipActions = [
+      // Tip 0: Ilocano Bible — navigate to BibleScreen
+      () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BibleScreen()),
+          ),
+      null, // Tip 1: no action
+      null, // Tip 2: no action
+      null, // Tip 3: no action
+    ];
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final weekdays = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    final weekday = weekdays[date.weekday % 7];
+    final month = months[date.month - 1];
+    return '$weekday, $month ${date.day}, ${date.year}';
+  }
+
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+    if (timestamp is Timestamp) {
+      final date = timestamp.toDate();
+      final difference = DateTime.now().difference(date);
+      if (difference.inDays > 0) return '${difference.inDays}d ago';
+      if (difference.inHours > 0) return '${difference.inHours}h ago';
+      if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+      return 'Just now';
+    }
+    return '';
+  }
 
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -75,65 +146,224 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildComposer(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
+  Widget _buildWelcomeHeader(BuildContext context, SettingsProvider settings) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final String displayName = settings.nickname.isNotEmpty
+        ? settings.nickname
+        : 'User';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  colorScheme.primary.withValues(alpha: 0.25),
+                  colorScheme.primary.withValues(alpha: 0.05),
+                ]
+              : [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.8),
+                ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: isDark
+            ? Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.3),
+                width: 1.5,
+              )
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.church_rounded,
+                color: isDark ? colorScheme.primary : Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'UECFI APP',
+                style: TextStyle(
+                  color: isDark ? colorScheme.onSurface : Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Hello, $displayName! 👋',
+            style: TextStyle(
+              color: isDark ? colorScheme.onSurface : Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _formatDate(DateTime.now()),
+            style: TextStyle(
+              color: isDark
+                  ? colorScheme.onSurfaceVariant.withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.85),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickTips(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final containerBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9F9F9);
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08);
-
-    final String initial = settings.nickname.isNotEmpty
-        ? settings.nickname[0].toUpperCase()
-        : 'U';
-    final Color avatarBg = ColorUtils.getAvatarColor(settings.nickname);
-
-    return GestureDetector(
-      onTap: () => CreatePostScreen.show(context),
-      behavior: HitTestBehavior.opaque,
+    return ChatGPTCard(
+      borderRadius: 16,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(20.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: settings.nickname == 'DEVELOPER'
-                  ? Colors.amber.shade700
-                  : avatarBg,
-              child: settings.nickname == 'DEVELOPER'
-                  ? const Icon(
-                      Icons.verified_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    )
-                  : Text(
-                      initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.tips_and_updates_rounded,
+                color: Colors.amber,
+                size: 28,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: containerBg,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: borderColor, width: 1.5),
-                ),
-                child: Text(
-                  settings.nickname.isNotEmpty
-                      ? "What's on your mind, ${settings.nickname}?"
-                      : "What's on your mind?",
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w400,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'QUICK TIP',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.primary,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                    child: Builder(
+                      key: ValueKey<int>(_currentTipIndex),
+                      builder: (context) {
+                        final tipText = _quickTips[_currentTipIndex];
+                        final tipAction = _quickTipActions[_currentTipIndex];
+                        final baseStyle = TextStyle(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: colorScheme.onSurface,
+                        );
+                        if (tipAction == null) {
+                          return Text(tipText, style: baseStyle);
+                        }
+                        return Text.rich(
+                          TextSpan(
+                            style: baseStyle,
+                            children: [
+                              TextSpan(text: tipText),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: GestureDetector(
+                                  onTap: tipAction,
+                                  child: Text(
+                                    _bibleActionLabel,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      height: 1.45,
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      // Dots Indicator
+                      Row(
+                        children: List.generate(_quickTips.length, (index) {
+                          final isActive = index == _currentTipIndex;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            height: 6,
+                            width: isActive ? 16 : 6,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant.withValues(
+                                      alpha: 0.3,
+                                    ),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          );
+                        }),
+                      ),
+                      const Spacer(),
+                      // Left Button
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          setState(() {
+                            _currentTipIndex =
+                                (_currentTipIndex - 1 + _quickTips.length) %
+                                _quickTips.length;
+                          });
+                        },
+                      ),
+                      // Right Button
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          setState(() {
+                            _currentTipIndex =
+                                (_currentTipIndex + 1) % _quickTips.length;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -142,8 +372,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     return Scaffold(
       appBar: MainAppBar(
         title: 'Community Forum',
@@ -162,29 +410,58 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: _buildComposer(context),
+          // 1. Welcome Card Header
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            sliver: SliverToBoxAdapter(
+              child: _buildWelcomeHeader(context, settings),
+            ),
           ),
+
+          // 2. Quick Tips Section
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            sliver: SliverToBoxAdapter(child: _buildQuickTips(context)),
+          ),
+
+          // 4. Community Feed Title
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: _buildSectionHeader(context, 'Community Forum'),
+            ),
+          ),
+
+          // 5. Community Posts Stream List
           Consumer<SettingsProvider>(
             builder: (context, settings, child) {
               return StreamBuilder<QuerySnapshot>(
                 stream: FirestoreService().getCommunityPostsStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
                     );
                   }
                   if (snapshot.hasError) {
-                    return SliverFillRemaining(
+                    return SliverToBoxAdapter(
                       child: Center(
-                        child: Text('Error loading feed: ${snapshot.error}'),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text('Error loading feed: ${snapshot.error}'),
+                        ),
                       ),
                     );
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return SliverFillRemaining(
-                      child: _buildEmptyState(context),
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildEmptyState(context),
+                      ),
                     );
                   }
 
@@ -194,8 +471,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   }).toList();
 
                   if (posts.isEmpty) {
-                    return SliverFillRemaining(
-                      child: _buildEmptyState(context),
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildEmptyState(context),
+                      ),
                     );
                   }
 
@@ -236,10 +516,12 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+
+          // 6. Ad Banner space
           const SliverToBoxAdapter(
             child: Column(
               children: [
-                SizedBox(height: 32),
+                SizedBox(height: 24),
                 AdBannerWidget(),
                 SizedBox(height: 32),
               ],
@@ -247,20 +529,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => CreatePostScreen.show(context),
+        child: const Icon(Icons.add_comment_rounded),
+      ),
     );
-  }
-
-  String _formatTimestamp(dynamic timestamp) {
-    if (timestamp == null) return 'Just now';
-    if (timestamp is Timestamp) {
-      final date = timestamp.toDate();
-      final difference = DateTime.now().difference(date);
-      if (difference.inDays > 0) return '${difference.inDays}d ago';
-      if (difference.inHours > 0) return '${difference.inHours}h ago';
-      if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
-      return 'Just now';
-    }
-    return '';
   }
 }
 

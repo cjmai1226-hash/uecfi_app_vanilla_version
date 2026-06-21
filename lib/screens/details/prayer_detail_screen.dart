@@ -178,63 +178,49 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       ),
       bottomNavigationBar: _isProjectMode || !_hasList
           ? null
-          : BottomAppBar(
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
-                      width: 1,
-                    ),
+          : Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.05),
+                    width: 1.5,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    // Previous Button
-                    OutlinedButton.icon(
-                      onPressed: _hasPrevious ? _goToPrevious : null,
-                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                      label: const Text('Previous'),
-                      style: OutlinedButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        side: BorderSide(
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black12,
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Previous Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        tooltip: 'Previous Prayer',
+                        onPressed: _hasPrevious ? _goToPrevious : null,
+                      ),
+
+                      // Counter
+                      Text(
+                        '${_currentIndex + 1} / ${widget.allPrayers!.length}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: colorScheme.onSurface,
                         ),
-                        foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
-                        disabledForegroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26,
-                        visualDensity: VisualDensity.compact,
                       ),
-                    ),
-                    const Spacer(),
-                    // Counter
-                    Text(
-                      '${_currentIndex + 1} / ${widget.allPrayers!.length}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+
+                      // Next Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward_ios_rounded),
+                        tooltip: 'Next Prayer',
+                        onPressed: _hasNext ? _goToNext : null,
                       ),
-                    ),
-                    const Spacer(),
-                    // Next Button
-                    FilledButton.icon(
-                      onPressed: _hasNext ? _goToNext : null,
-                      label: const Text('Next'),
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                      iconAlignment: IconAlignment.end,
-                      style: FilledButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F0F0F),
-                        foregroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white,
-                        disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                        disabledForegroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26,
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

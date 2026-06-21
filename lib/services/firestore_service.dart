@@ -220,4 +220,12 @@ class FirestoreService {
       }
     });
   }
+
+  // 11. Get Announcements Stream
+  Stream<QuerySnapshot> getAnnouncementsStream() {
+    return _firestore
+        .collection('announcements')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
 }

@@ -4,6 +4,7 @@ import '../screens/home_screen.dart';
 import '../screens/prayers_screen.dart';
 import '../screens/songs_screen.dart';
 import '../screens/menu/centers_screen.dart';
+import '../services/ad_service.dart';
 import '../widgets/app_drawer.dart';
 
 class AppNavigation extends StatefulWidget {
@@ -16,11 +17,15 @@ class AppNavigation extends StatefulWidget {
 class _AppNavigationState extends State<AppNavigation> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
+  late final List<Widget> _screens;
 
   @override
-  Widget build(BuildContext context) {
-    final screens = [
-      HomeScreen(onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer()),
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
       PrayersScreen(
         onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
       ),
@@ -29,13 +34,20 @@ class _AppNavigationState extends State<AppNavigation> {
         onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
       ),
     ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      // Only block back when we're at the root (no pushed routes to pop).
+      // When inside a sub-screen (e.g. Settings, Bible) allow the gesture
+      // to pop normally — matching the AppBar back button behaviour.
+      canPop: Navigator.canPop(context),
       onPopInvokedWithResult: (didPop, result) async {
+        // If canPop was true a route was already popped — nothing else to do.
         if (didPop) return;
 
-        // 1. If we are not on Home (index 0), go back to Home
+        // We're at the root. If not on Home, go back to Home tab.
         if (_currentIndex != 0) {
           setState(() {
             _currentIndex = 0;
@@ -43,7 +55,7 @@ class _AppNavigationState extends State<AppNavigation> {
           return;
         }
 
-        // 2. If we ARE on Home, show the exit confirmation dialog
+        // Already on Home — show exit dialog.
         final shouldExit = await _showExitDialog(context);
         if (shouldExit == true) {
           SystemNavigator.pop();
@@ -52,12 +64,17 @@ class _AppNavigationState extends State<AppNavigation> {
       child: Scaffold(
         key: _scaffoldKey,
         drawer: const AppDrawer(),
-        body: IndexedStack(index: _currentIndex, children: screens),
+        body: IndexedStack(index: _currentIndex, children: _screens),
         bottomNavigationBar: MediaQuery.of(context).viewInsets.bottom > 0
             ? null
             : NavigationBar(
                 selectedIndex: _currentIndex,
                 onDestinationSelected: (index) {
+                  // Show interstitial at natural tab transitions.
+                  // AdService enforces a 60-second cooldown internally.
+                  if (index != _currentIndex) {
+                    AdService().showInterstitialIfReady();
+                  }
                   setState(() {
                     _currentIndex = index;
                   });
@@ -69,8 +86,8 @@ class _AppNavigationState extends State<AppNavigation> {
                     label: 'Home',
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.menu_book_outlined),
-                    selectedIcon: Icon(Icons.menu_book_rounded),
+                    icon: Icon(Icons.favorite_border_rounded),
+                    selectedIcon: Icon(Icons.favorite_rounded),
                     label: 'Prayers',
                   ),
                   NavigationDestination(
