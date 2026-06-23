@@ -45,10 +45,14 @@ class AdService {
   InterstitialAd? _interstitialAd;
   bool _isInterstitialLoading = false;
 
+  /// Action counter to throttle interstitial ads to only show every 3rd transition request.
+  int _interstitialActionCount = 0;
+  static const int _interstitialActionsRequired = 3;
+
   /// Timestamp of the last interstitial impression. Used to enforce the
-  /// Google AdMob policy minimum gap between interstitials (~60 seconds).
+  /// Google AdMob policy minimum gap between interstitials (~180 seconds).
   DateTime? _lastInterstitialShown;
-  static const Duration _minInterstitialInterval = Duration(seconds: 60);
+  static const Duration _minInterstitialInterval = Duration(seconds: 180);
 
   bool get isSupportedPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
@@ -165,6 +169,13 @@ class AdService {
   /// Returns `true` if an ad was shown.
   bool showInterstitialIfReady() {
     if (!isSupportedPlatform) return false;
+
+    _interstitialActionCount++;
+    if (_interstitialActionCount < _interstitialActionsRequired) {
+      debugPrint('AdMob: Interstitial request count $_interstitialActionCount/$_interstitialActionsRequired — skipping');
+      return false;
+    }
+
     if (_interstitialAd == null) {
       debugPrint('AdMob: Interstitial not ready yet');
       return false;
@@ -177,6 +188,7 @@ class AdService {
       return false;
     }
 
+    _interstitialActionCount = 0; // Reset counter
     _interstitialAd!.show();
     _interstitialAd = null; // Will be replaced via fullScreenContentCallback
     return true;

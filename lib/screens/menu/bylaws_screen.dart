@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/database_helper.dart';
 import '../../widgets/main_app_bar.dart';
 import '../details/bylaw_detail_screen.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class BylawsScreen extends StatefulWidget {
   const BylawsScreen({super.key});

@@ -6,7 +6,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../widgets/chord_diagram.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class SongDetailScreen extends StatefulWidget {
   final Map<String, dynamic> song;

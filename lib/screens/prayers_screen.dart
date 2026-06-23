@@ -6,7 +6,7 @@ import '../providers/settings_provider.dart';
 import 'details/prayer_detail_screen.dart';
 import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
-import '../widgets/chatgpt_design_system.dart';
+import '../widgets/chatgpt_widgets.dart';
 
 class PrayersScreen extends StatelessWidget {
   const PrayersScreen({super.key, this.onOpenDrawer});

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/database_helper.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 import '../../widgets/main_app_bar.dart';
 
 class BibleScreen extends StatefulWidget {

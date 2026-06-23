@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import 'package:flutter/services.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 import 'recover_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -67,32 +67,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _launchUrl(String url) async {
-    if (_isEditing) return; // Prevent external links in edit mode
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
 
 
 
-  double _calculateCompletion(SettingsProvider settings) {
-    final fields = [
-      settings.firstName,
-      settings.middleName,
-      settings.surname,
-      settings.nickname,
-      settings.email,
-      settings.district,
-      settings.position,
-      settings.area,
-      settings.centerName,
-      settings.centerAddress,
-    ];
-    final filledFields = fields.where((f) => f.isNotEmpty).length;
-    return filledFields / fields.length;
-  }
+
+
 
   void _onCancel() {
     if (_isSaving) return;
@@ -242,7 +221,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
-    final completion = _calculateCompletion(settings);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -358,27 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
-            if (!_isEditing && completion < 1.0) ...[
-              _buildCompletionCard(context, completion, colorScheme),
-              const SizedBox(height: 24),
-            ],
-            _buildCardSection(
-              context,
-              'Contact Information',
-              [
-                _buildInfoTile(
-                  context,
-                  controller: _emailController,
-                  icon: Icons.alternate_email_rounded,
-                  label: 'Email',
-                  value: settings.email,
-                  onTap: () => _launchUrl('mailto:${settings.email}'),
-                  keyboardType: TextInputType.emailAddress,
-                  readOnly: true, // Email is locked as a unique identifier
-                ),
-              ],
-            ),
+
             const SizedBox(height: 24),
             _buildCardSection(
               context,
@@ -620,70 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCompletionCard(
-    BuildContext context,
-    double percentage,
-    ColorScheme colorScheme,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ChatGPTCard(
-      borderRadius: 12.0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.stars_rounded,
-                  color: isDark ? Colors.white : Colors.black,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Complete your profile',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${(percentage * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: percentage,
-              backgroundColor: isDark ? Colors.white12 : Colors.black12,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isDark ? Colors.white : Colors.black,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              minHeight: 8,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Add more details to make it easier for the center to reach you.',
-              style: TextStyle(
-                fontSize: 12,
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildCardSection(
     BuildContext context,

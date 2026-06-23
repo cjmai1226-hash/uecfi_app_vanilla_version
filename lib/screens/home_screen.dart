@@ -10,7 +10,7 @@ import 'forms/create_post_screen.dart';
 import 'menu/profile_screen.dart';
 import 'search_screen.dart';
 import '../widgets/main_app_bar.dart';
-import '../widgets/chatgpt_design_system.dart';
+import '../widgets/chatgpt_widgets.dart';
 import '../utils/color_utils.dart';
 import 'menu/bible_screen.dart';
 
@@ -530,6 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => CreatePostScreen.show(context),
         child: const Icon(Icons.add_comment_rounded),
       ),

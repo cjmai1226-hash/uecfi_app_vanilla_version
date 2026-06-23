@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/ad_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

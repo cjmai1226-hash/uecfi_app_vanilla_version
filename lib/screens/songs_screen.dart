@@ -3,8 +3,9 @@ import '../services/database_helper.dart';
 import '../services/ad_service.dart';
 import 'details/song_detail_screen.dart';
 import 'search_screen.dart';
+import 'menu/bookmarks_screen.dart';
 import '../widgets/main_app_bar.dart';
-import '../widgets/chatgpt_design_system.dart';
+import '../widgets/chatgpt_widgets.dart';
 
 class SongsScreen extends StatelessWidget {
   const SongsScreen({super.key, this.onOpenDrawer});
@@ -127,6 +128,19 @@ class SongsScreen extends StatelessWidget {
       ),
       bottomNavigationBar: const SafeArea(
         child: AdBannerWidget(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: null,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BookmarksScreen(),
+            ),
+          );
+        },
+        tooltip: 'Bookmarks',
+        child: const Icon(Icons.bookmarks_rounded),
       ),
     );
   }

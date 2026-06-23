@@ -9,7 +9,7 @@ import 'details/prayer_detail_screen.dart';
 import 'details/song_detail_screen.dart';
 import 'details/center_detail_screen.dart';
 import 'details/bylaw_detail_screen.dart';
-import '../widgets/chatgpt_design_system.dart';
+import '../widgets/chatgpt_widgets.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../forms/update_center_screen.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class CenterDetailScreen extends StatefulWidget {
   final Map<String, dynamic> centerNode;

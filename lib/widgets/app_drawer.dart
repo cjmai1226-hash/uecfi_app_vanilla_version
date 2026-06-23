@@ -4,12 +4,12 @@ import 'package:in_app_review/in_app_review.dart';
 import '../providers/settings_provider.dart';
 import '../screens/menu/profile_screen.dart';
 import '../screens/menu/settings_screen.dart';
-import '../screens/menu/bookmarks_screen.dart';
+
 import '../screens/menu/bible_screen.dart';
 import '../screens/forms/submit_song_screen.dart';
 import '../screens/menu/help_feedback_screen.dart';
 import '../screens/menu/bylaws_screen.dart';
-import 'chatgpt_design_system.dart';
+import 'chatgpt_widgets.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({
@@ -99,19 +99,7 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
                   _buildSectionLabel(context, 'Tools & Content'),
-                  _DrawerTile(
-                    icon: Icons.bookmarks_outlined,
-                    label: 'Bookmarks',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const BookmarksScreen(),
-                        ),
-                      );
-                    },
-                  ),
+
                   _DrawerTile(
                     icon: Icons.queue_music_rounded,
                     label: 'Submit Song',

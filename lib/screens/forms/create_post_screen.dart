@@ -4,7 +4,7 @@ import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ad_service.dart';
 import '../menu/profile_screen.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final Map<String, dynamic>? postToEdit;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'setup_screen.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});

@@ -4,7 +4,7 @@ import '../details/center_detail_screen.dart';
 import '../search_screen.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../services/ad_service.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class CentersScreen extends StatefulWidget {
   const CentersScreen({super.key, this.onOpenDrawer});

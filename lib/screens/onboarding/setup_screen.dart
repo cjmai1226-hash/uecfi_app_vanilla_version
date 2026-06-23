@@ -4,7 +4,7 @@ import '../../providers/settings_provider.dart';
 import '../../services/database_helper.dart';
 import '../menu/terms_agreements_screen.dart';
 import '../../services/firestore_service.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class OnboardingSetupScreen extends StatefulWidget {
   const OnboardingSetupScreen({super.key});
@@ -16,9 +16,12 @@ class OnboardingSetupScreen extends StatefulWidget {
 class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _nicknameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _positionController = TextEditingController(text: 'Member');
+  final _areaController = TextEditingController();
   final _districtController = TextEditingController();
   final _centerNameController = TextEditingController();
   final _centerAddressController = TextEditingController();
@@ -54,9 +57,12 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
   @override
   void dispose() {
     _firstNameController.dispose();
+    _middleNameController.dispose();
     _surnameController.dispose();
     _nicknameController.dispose();
     _emailController.dispose();
+    _positionController.dispose();
+    _areaController.dispose();
     _districtController.dispose();
     _centerNameController.dispose();
     _centerAddressController.dispose();
@@ -92,6 +98,17 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
   }
 
   Future<void> _onProceed() async {
+    if (!_isManualCenter && _selectedCenterMap == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select your local church center, or select "Other / Not Listed" to enter manually.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isCheckingEmail = true);
       
@@ -140,11 +157,11 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
           _nicknameController.text.trim(),
           email,
           _districtController.text.trim(),
-          settings.position,
+          _positionController.text.trim(),
           _firstNameController.text.trim(),
-          settings.middleName,
+          _middleNameController.text.trim(),
           _surnameController.text.trim(),
-          settings.area,
+          _areaController.text.trim(),
           _centerNameController.text.trim(),
           _centerAddressController.text.trim(),
         );
@@ -259,6 +276,12 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
                   validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
                 ),
                 ChatGPTTextField(
+                  controller: _middleNameController,
+                  label: 'Middle Name',
+                  icon: Icons.person_outline_rounded,
+                  validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                ),
+                ChatGPTTextField(
                   controller: _surnameController,
                   label: 'Surname',
                   icon: Icons.person_rounded,
@@ -364,6 +387,20 @@ class _OnboardingSetupScreenState extends State<OnboardingSetupScreen> {
                     validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
                   ),
                 ],
+
+                const SizedBox(height: 16),
+                ChatGPTTextField(
+                  controller: _positionController,
+                  label: 'Role / Position',
+                  icon: Icons.verified_user_outlined,
+                  validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                ),
+                ChatGPTTextField(
+                  controller: _areaController,
+                  label: 'Area',
+                  icon: Icons.near_me_outlined,
+                  validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                ),
                 
                 const SizedBox(height: 48),
                 

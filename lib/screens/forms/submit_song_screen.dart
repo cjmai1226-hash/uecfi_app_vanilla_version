@@ -5,7 +5,7 @@ import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ad_service.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class SubmitSongScreen extends StatefulWidget {
   const SubmitSongScreen({super.key});

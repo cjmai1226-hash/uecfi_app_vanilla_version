@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../navigation/app_navigation.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class TermsAgreementsScreen extends StatefulWidget {
   final bool isOnboarding;

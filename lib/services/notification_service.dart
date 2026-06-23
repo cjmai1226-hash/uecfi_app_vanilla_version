@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -30,7 +30,7 @@ class NotificationService {
     }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/launcher_icon');
+        AndroidInitializationSettings('ic_notification');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
@@ -94,6 +94,8 @@ class NotificationService {
             channelDescription: 'Daily reminder at 5:50 PM to pray',
             importance: Importance.max,
             priority: Priority.high,
+            largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+            color: Color(0xFF1A73E8),
           ),
           iOS: DarwinNotificationDetails(),
         ),
@@ -142,6 +144,8 @@ class NotificationService {
             channelDescription: 'Weekly reminder on Sundays to worship and serve',
             importance: Importance.max,
             priority: Priority.high,
+            largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+            color: Color(0xFF1A73E8),
           ),
           iOS: DarwinNotificationDetails(),
         ),
@@ -189,6 +193,8 @@ class NotificationService {
           channelDescription: 'Daily reminder at 6:00 PM to pray',
           importance: Importance.max,
           priority: Priority.high,
+          largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+          color: Color(0xFF1A73E8),
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -209,6 +215,8 @@ class NotificationService {
           channelDescription: 'Weekly reminder on Sundays to worship and serve',
           importance: Importance.max,
           priority: Priority.high,
+          largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+          color: Color(0xFF1A73E8),
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -235,6 +243,8 @@ class NotificationService {
             channelDescription: 'Daily reminder at 6:00 AM to pray',
             importance: Importance.max,
             priority: Priority.high,
+            largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+            color: Color(0xFF1A73E8),
           ),
           iOS: DarwinNotificationDetails(),
         ),
@@ -277,6 +287,8 @@ class NotificationService {
           channelDescription: 'Daily reminder at 6:00 AM to pray',
           importance: Importance.max,
           priority: Priority.high,
+          largeIcon: DrawableResourceAndroidBitmap('launcher_icon'),
+          color: Color(0xFF1A73E8),
         ),
         iOS: DarwinNotificationDetails(),
       ),

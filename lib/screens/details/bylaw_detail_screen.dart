@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/chatgpt_design_system.dart';
+import '../../widgets/chatgpt_widgets.dart';
 
 class BylawDetailScreen extends StatelessWidget {
   final Map<String, dynamic> bylaw;

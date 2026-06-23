@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../providers/settings_provider.dart';
 import '../utils/color_utils.dart';
-import '../widgets/chatgpt_design_system.dart';
+import '../widgets/chatgpt_widgets.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final Map<String, dynamic> postNode;
